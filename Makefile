@@ -1,7 +1,13 @@
-all : mbr vfat
-
-mbr : mbr.c
-	gcc -g -Wall -o mbr mbr.c
+all :
+	make -C gpt/
+	make -C mbr/
+	make -C ext2/
+	make -C vfat/
+	make -C ntfs/
 	
-vfat : vfat.c
-	gcc -g -Wall -o vfat vfat.c
+clean :
+	make -i -C gpt/ clean
+	make -i -C mbr/ clean
+	make -i -C ext2/ clean
+	make -i -C vfat/ clean
+	make -i -C ntfs/ clean
