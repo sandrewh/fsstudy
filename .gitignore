@@ -1,0 +1,4 @@
+imgs/*
+.DS_Store
+*.dSYM/
+*.o
