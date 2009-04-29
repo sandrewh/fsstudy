@@ -304,7 +304,7 @@ int read_file(ext2_info *ext2, directory_entry *d, char* buffer, size_t size, of
 		if (bytes_read >= size) return size;		
 	}
 	
-	printf("enumerate_dir: double/tripple indirect blocks not supported!\n");
+	fprintf(stderr, "enumerate_dir: double/tripple indirect blocks not supported!\n");
 	exit(1);
 	
 	return size;

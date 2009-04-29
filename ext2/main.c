@@ -29,6 +29,12 @@ void print_human_size(float size)
 
 void cmd_read(ext2_info *ext2, int argc, char *argv[])
 {
+	if (argc < 1)
+	{
+		printf("ls: error, no path given\n");
+		return;
+	}	
+	
 	char *path = argv[0];
 	directory_entry *d = path_to_entry(ext2, path);
 	
@@ -40,9 +46,9 @@ void cmd_read(ext2_info *ext2, int argc, char *argv[])
 	
 	if (d->file_type == EXT2_FT_DIR)
 	{
-		printf("%s is a directory.\n", path);
-		free(d);
-		return;
+		fprintf(stderr, "warning: %s is a directory.\n", path);
+//		free(d);
+//		return;
 	}
 
 	char buffer[READ_WRITE_BUFFER_SIZE];
@@ -63,6 +69,12 @@ void cmd_read(ext2_info *ext2, int argc, char *argv[])
 
 void cmd_ls(ext2_info *ext2, int argc, char *argv[])
 {
+	if (argc < 1)
+	{
+		printf("ls: error, no directory given\n");
+		return;
+	}
+	
 	char *path = argv[0];	
 	directory_entry *d = path_to_entry(ext2, path);
 
@@ -206,13 +218,18 @@ int main(int argc, char *argv[]) {
 
 	if (ext2)
 	{
-		if (strcmp(sub_argv[0], "ls") == 0) {
-			cmd_ls(ext2, num_sub_args-1, sub_argv+1);
-		} else if (strcmp(sub_argv[0], "read") == 0) {
-			cmd_read(ext2, num_sub_args-1, sub_argv+1);
+		if (num_sub_args)
+		{
+			if (strcmp(sub_argv[0], "ls") == 0) {
+				cmd_ls(ext2, num_sub_args-1, sub_argv+1);
+			} else if (strcmp(sub_argv[0], "read") == 0) {
+				cmd_read(ext2, num_sub_args-1, sub_argv+1);
+			} else {
+				printf("unknown command: %s!\n", sub_argv[0]);
+			}				
 		} else {
-			printf("unknown command: %s!\n", sub_argv[0]);
-		}	
+			printf("no command given\n");
+		}
 
 		ext2_umount(ext2);		
 	}
