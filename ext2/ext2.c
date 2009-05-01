@@ -19,7 +19,13 @@ const unsigned int EXT2_VALID_FS = 1;
 
 // TODO: use same block enumerating mechanism (w/ callbacks?) for enumerate_dir and read_file?
 
-void enumerate_dir(ext2_info *ext2, inode *in, int callback(directory_entry entry, void *arg), void *arg)
+/*
+ * in = inode of the directory to enumerate
+ * callback is called with each entry and arg
+ * if callback returns 0, enumeration ends
+ */
+void
+enumerate_dir (ext2_info *ext2, inode *in, int callback(directory_entry entry, void *arg), void *arg)
 {
 	// TODO: upper 32-bits of size in in->i_dir_acl
 	// TODO: handle indirect blocks
@@ -74,8 +80,11 @@ typedef struct {
 	directory_entry *entry;	/* pointer to result (0 if not found) */
 } search_dir_data;
 
-/* find and return 1 directory entry for search_dir */
-int search_dir_callback(directory_entry entry, void *arg)
+/*
+ * find and return 1 matching directory entry for search_dir
+ */
+int
+search_dir_callback (directory_entry entry, void *arg)
 {
 	search_dir_data *data = (search_dir_data*)arg;
 
@@ -91,7 +100,11 @@ int search_dir_callback(directory_entry entry, void *arg)
 	return 1; /* continue enumerating */
 }
 
-directory_entry* search_dir(ext2_info *ext2, inode *in, char* search_name)
+/*
+ * find directory entry of directory /in/ with name == search_name
+ */
+directory_entry*
+search_dir (ext2_info *ext2, inode *in, char* search_name)
 {
 	search_dir_data data;
 
@@ -99,23 +112,6 @@ directory_entry* search_dir(ext2_info *ext2, inode *in, char* search_name)
 	data.entry = 0;	/* nothing found, yet */
 
 	enumerate_dir(ext2, in, search_dir_callback, (void*)&data);
-
-#if 0
-	enumerate_dir(ext2, in, (void*)&data) : int (directory_entry entry, void *arg) {
-		search_dir_data *data = (search_dir_data*)arg;
-
-		/* search name found? */
-		if (strcmp(entry.name, data->search_name) == 0)
-		{
-			entry.name = strdup(entry.name); /* keep our own copy of filename - caller should free this one */
-			data->entry = malloc(sizeof(directory_entry)); /* create space to store the result */
-			*(data->entry) = entry; /* copy result */
-			return 0; /* stop enumerating */
-		}
-
-		return 1; /* continue enumerating */
-	}
-#endif
 
 	return data.entry;
 }
@@ -128,8 +124,11 @@ typedef struct {
 	directory_entry *entries;	/* buffer to copy entires to */
 } read_dir_data;
 
-/* copy certain span of directory entries into buffer for read_dir */
-int read_dir_callback(directory_entry entry, void *arg)
+/*
+ * copy certain span of directory entries into buffer for read_dir
+ */
+int
+read_dir_callback (directory_entry entry, void *arg)
 {
 	read_dir_data *data = arg;
 
@@ -142,8 +141,11 @@ int read_dir_callback(directory_entry entry, void *arg)
 	return 1; /* keep going */
 }
 
-/* copy certain span of directory entries into /entries/ for caller */
-unsigned int read_dir(ext2_info *ext2, inode *in, directory_entry *entries, size_t size, off_t offset)
+/*
+ * copy certain span of directory entries into /entries/ for caller
+ */
+unsigned int
+read_dir (ext2_info *ext2, inode *in, directory_entry *entries, size_t size, off_t offset)
 {	
 	read_dir_data data;
 
@@ -155,25 +157,15 @@ unsigned int read_dir(ext2_info *ext2, inode *in, directory_entry *entries, size
 
 	enumerate_dir(ext2, in, read_dir_callback, (void*)&data);
 
-#if 0
-	enumerate_dir(ext2, in, (void*)&data) : int (directory_entry entry, void *arg) {	
-		read_dir_data *data = arg;
-
-		if (data->entry_num++ < data->offset) return 1; /* keep going */
-		if (data->num_read >= data->size) return 0; /* stop */
-
-		entry.name = strdup(entry.name); /* keep our own copy of filename - caller should free this one */
-		data->entries[data->num_read++] = entry;
-
-		return 1; /* keep going */
-	}
-#endif
-
 	return data.num_read;
 }
 
 /* OPT: path_to_entry: make this recursive? */
-directory_entry* path_to_entry(ext2_info *ext2, char *path)
+/*
+ * given an absolute path, return the corresponding directory_entry
+ */
+directory_entry*
+path_to_entry (ext2_info *ext2, char *path)
 {
 	path = strdup(path); /* don't mess w/ original path */
 	char *search_name = strtok(path, PATH_SEPARATOR);
@@ -238,7 +230,11 @@ directory_entry* path_to_entry(ext2_info *ext2, char *path)
 	return parent;
 }
 
-int read_file(ext2_info *ext2, directory_entry *d, char* buffer, size_t size, off_t offset)
+/*
+ * read /size/ bytes starting at /offset/ from file /directory_entry/ into /buffer/
+ */
+int
+read_file (ext2_info *ext2, directory_entry *d, char* buffer, size_t size, off_t offset)
 {
 	inode in;
 	inode_read(ext2, &in, d->inode);
@@ -309,7 +305,8 @@ int read_file(ext2_info *ext2, directory_entry *d, char* buffer, size_t size, of
 	return size;
 }
 
-ext2_info* ext2_mount(FILE* f, unsigned int partition_start_sector)
+ext2_info*
+ext2_mount (FILE* f, unsigned int partition_start_sector)
 {
 	ext2_info *ext2 = malloc(sizeof(ext2_info));
 	ext2->volume_offset = partition_start_sector * BYTES_PER_SECTOR;
@@ -338,7 +335,8 @@ ext2_info* ext2_mount(FILE* f, unsigned int partition_start_sector)
 	return ext2;
 }
 
-void ext2_umount(ext2_info *ext2)
+void
+ext2_umount (ext2_info *ext2)
 {
 	/* writeable mounts not yet supported, therefor not much cleanup for now */
 	free(ext2); ext2 = 0;
