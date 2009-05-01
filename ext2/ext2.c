@@ -15,7 +15,6 @@
 const unsigned int BYTES_PER_SECTOR = 512;
 const char PATH_SEPARATOR[] = "/";
 const unsigned int PATH_SEPARATOR_LEN = 1;
-const unsigned int EXT2_SUPER_BLOCK_MAGIC = 0xef53;
 const unsigned int EXT2_VALID_FS = 1;
 
 // TODO: use same block enumerating mechanism (w/ callbacks?) for enumerate_dir and read_file?
@@ -341,5 +340,6 @@ ext2_info* ext2_mount(FILE* f, unsigned int partition_start_sector)
 
 void ext2_umount(ext2_info *ext2)
 {
+	/* writeable mounts not yet supported, therefor not much cleanup for now */
 	free(ext2); ext2 = 0;
 }

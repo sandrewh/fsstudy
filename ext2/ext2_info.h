@@ -6,6 +6,12 @@
 #define EXT2_ROOT_INO 2
 #define EXT2_FT_DIR 2
 
+#define EXT2_SUPER_BLOCK_MAGIC	0xef53
+
+//-- s_rev_level
+#define EXT2_GOOD_OLD_REV	0
+#define EXT2_DYNAMIC_REV	1
+
 //-- file format --
 #define EXT2_S_IFSOCK	0xC000	//socket
 #define EXT2_S_IFLNK	0xA000	//symbolic link
