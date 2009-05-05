@@ -2,10 +2,16 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "crc32.h"
+
+// TODO: use packed structs for HEader and Partitions Entry
+// TODO: Current LBA, Backup LBA, First Usable LBA, Last Usable LBA 
+
 char EFI_SIG[] = "EFI PART";
 const unsigned int BUF_SIZE = 512;
 const unsigned int PRETTY_GUID_LEN =	16	/* hex digits */
 										+ 4	/* dashes */;
+const unsigned int BYTES_PER_LBA = 0x200;
 
 void print_name_from_pretty_guid(char *pretty_guid)
 {
@@ -82,12 +88,10 @@ void print_human_size(float size)
 
 /* parse the gpt and display info */
 void parse_gpt(FILE* f) {
-	/* TODO: check CRC32's */
-	
 	unsigned char buf[BUF_SIZE];
 	
 	/* read LBA 1 from disk */
-	fseek(f, 0x200, SEEK_SET);
+	fseek(f, 1*BYTES_PER_LBA, SEEK_SET);
 	fread(buf, 1, BUF_SIZE, f);
 
 	/* check for EFI signature */
@@ -100,25 +104,38 @@ void parse_gpt(FILE* f) {
 	/* check for rev. other than 0 0 1 0 */
 	if (buf[8] || buf[9] || !buf[10] || buf[11])
 	{
-		printf("Warning: GPT Rev. %x %x %x %x found.  Written for Rev. 0 0 1 0.\n", buf[8], buf[9], buf[10], buf[11]);		
+		printf("Warning: GPT Rev. %x %x %x %x found.  Only tested Rev. 0 0 1 0.\n", buf[8], buf[9], buf[10], buf[11]);		
 	}
 
 	/* check header size */
 	unsigned int header_size = *(unsigned int*)(buf+12);
 	if (header_size != 92)
 	{
-		printf("Warning: Header Size = %u (should be 92)\n", header_size);
+		printf("Warning: Header Size = %u (expected 92)\n", header_size);
 	}
 
 	/* check header crc32 */
-	printf("Header CRC32: %x %x %x %x (not verified)\n", buf[16], buf[17], buf[18], buf[19]);
-	
-	/* TODO: Current LBA, Backup LBA, First Usable LBA, Last Usable LBA */
-	
+	uint32_t recorded_header_crc32 = *(unsigned int*)(buf+16);
+	buf[16] = buf[17] = buf[18] = buf[19] = 0; /* zero the header checksum field for calculation */
+	uint32_t calc_header_crc32 = crc32(0, buf, header_size);
+	if (calc_header_crc32 != recorded_header_crc32)
+	{
+		printf("Header Checksum: BAD (read: %08x / calc: %08x)\n", recorded_header_crc32, calc_header_crc32);
+				
+//	} else {
+//		printf("Header Checksum: Good\n");
+	}
+		
 	/* print disk guid */
 	char pretty_guid[PRETTY_GUID_LEN+1];
 	sprint_guid(pretty_guid, buf+56);
-	printf("Disk GUID: %s\n", pretty_guid);
+	printf("Disk UUID: %s\n\n", pretty_guid);
+	
+	uint32_t table_start_lba = *(uint32_t*)(buf+72);
+	if (table_start_lba != 2)
+	{
+		printf("Warning: Table Start LBA = %u (should be 2)\n", table_start_lba);
+	}
 	
 	unsigned int partition_entries = *(unsigned int*)(buf+80);
 //	printf("Partition Slots: %u\n", partition_entries);
@@ -130,7 +147,7 @@ void parse_gpt(FILE* f) {
 		printf("Interesting: Slot Size = %u (should be 128, but Apple said it might change)\n", sizeof_partition_entries);
 	}
 
-	printf("CRC32 of Partitions: %x %x %x %x (not verified)\n\n", buf[88], buf[89], buf[90], buf[91]);
+	uint32_t recorded_table_crc32 = *(unsigned int*)(buf+88);
 
 	if (sizeof_partition_entries > BUF_SIZE)
 	{
@@ -139,16 +156,21 @@ void parse_gpt(FILE* f) {
 	}
 
 	/* LBA 2 */
-	fseek(f, 0x400, SEEK_SET); 
+	fseek(f, 2*BYTES_PER_LBA, SEEK_SET); 
+	
+	uint32_t calc_table_crc32 = 0;
+	
 	int i;
 	for (i=0; i<partition_entries; i++)
 	{		
 		fread(buf, 1, sizeof_partition_entries, f);
-	
+
+		calc_table_crc32 = crc32(calc_table_crc32, buf, sizeof_partition_entries);
+
+		int j;	
 		/* a type guid of all 0's is unused (in this case is interpreted to mean "end of entries") */
-		int j;
 		for (j=0;j<16;j++) if (buf[j]) break; /* break early if non-zero byte found */
-		if (j>=16) break; /* type guid was all 0's, break */
+		if (j>=16) continue; /* type guid was all 0's, continue */
 
 		printf("Partition %d:\n", i);
 		
@@ -186,6 +208,14 @@ void parse_gpt(FILE* f) {
 			printf("%02x ", buf[j]);
 		}
 		printf("\n\n");
+	}
+	
+	if (calc_table_crc32 != recorded_table_crc32)
+	{
+		printf("Table Checksum: BAD (read: %08x / calc: %08x)\n", recorded_table_crc32, calc_table_crc32);
+				
+//	} else {
+//		printf("Table Checksum: Good\n");
 	}
 	
 }

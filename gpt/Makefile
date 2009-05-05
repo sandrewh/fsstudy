@@ -1,10 +1,11 @@
 CFLAGS=-g -Wall
 
-gpt : gpt.c
-	gcc $(CFLAGS) -o gpt gpt.c
+gpt : gpt.c crc32.o
+	gcc $(CFLAGS) -o gpt gpt.c crc32.o
 
 clean :
 	rm *.o
 	rm gpt
 	rm -r gpt.dSYM/
 	
+crc32.o : crc32.c
