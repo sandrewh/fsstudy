@@ -5,7 +5,7 @@
 #include "gpt.h"
 #include "crc32.h"
 
-// TODO: use packed structs for partitions entry
+// TODO: check unique UUID for "Customer partition", doesn't seem to match Disk Utility
 // TODO: Current LBA, Backup LBA, First Usable LBA, Last Usable LBA 
 
 void print_name_from_pretty_guid(char *pretty_guid)
@@ -87,7 +87,6 @@ void parse_gpt(FILE* f) {
 	
 	/* read LBA 1 from disk */
 	fseek(f, 1*BYTES_PER_LBA, SEEK_SET);
-	//fread(buf, 1, BUF_SIZE, f);
 	fread(&header, 1, sizeof(header), f);
 
 	/* check for EFI signature */
@@ -141,18 +140,15 @@ void parse_gpt(FILE* f) {
 		printf("Interesting: Slot Size = %u (should be 128, but Apple said it might change)\n", header.partition_entry_size);
 	}
 
-	if (header.partition_entry_size > BUF_SIZE)
-	{
-		printf("Error: sizeof_partition_entries (%u) > BUF_SIZE (%u), should be 128.\n", header.partition_entry_size, BUF_SIZE);
-		return;
-	}
-
 	/* LBA 2 */
 	fseek(f, 2*BYTES_PER_LBA, SEEK_SET); 
-	
+
 	uint32_t calc_table_crc32 = 0;
+	unsigned char buf[header.partition_entry_size];
+	/* /entry/ interprets data in buf */
+	/* because partition_entry_size may be > 128 (the size of GPT_ENTRY), it has to be done this way */
+	GPT_ENTRY *entry = (GPT_ENTRY*)&buf; 
 	
-	unsigned char buf[BUF_SIZE];
 	int i;
 	for (i=0; i<(header.num_partition_entries); i++)
 	{		
@@ -162,43 +158,40 @@ void parse_gpt(FILE* f) {
 
 		int j;	
 		/* a type guid of all 0's is unused (in this case is interpreted to mean "end of entries") */
-		for (j=0;j<16;j++) if (buf[j]) break; /* break early if non-zero byte found */
+		for (j=0;j<16;j++) if (entry->type_uuid[j]) break; /* break early if non-zero byte found */
 		if (j>=16) continue; /* type guid was all 0's, continue */
 
 		printf("Partition %d:\n", i);
 		
 		printf("Name:\t\t\"");
 		/* hack to read utf-16 as ascii */
-		for (j=56;j<56+72;j+=2)
+		for (j=0;j<72;j+=2)
 		{
-			if (!buf[j]) break;
-			printf("%c", buf[j]);
+			if (!entry->name[j]) break;
+			printf("%c", entry->name[j]);
 		}
 		printf("\"\n");
 
-		sprint_guid(pretty_guid, buf+0);
+		sprint_guid(pretty_guid, entry->type_uuid);
 		printf("Type GUID:\t%s (", pretty_guid);
 		print_name_from_pretty_guid(pretty_guid);
 		printf(")\n");
 
-		sprint_guid(pretty_guid, buf+16);
+		sprint_guid(pretty_guid, entry->unique_uuid);
 		printf("Unique GUID:\t%s\n", pretty_guid);
 		
-		long long unsigned int first_lba, last_lba;
-		first_lba = *(long long unsigned int*)(buf+32);
-		last_lba = *(long long unsigned int*)(buf+40);
-		long long unsigned int size_b = (last_lba-first_lba+1)*0x200;
+		long long unsigned int size_b = ((entry->last_lba) - (entry->first_lba) + 1)*0x200;
 
-		printf("LBA Range:\t[%#llx, %#llx]\n", first_lba, last_lba);
+		printf("LBA Range:\t[%#llx, %#llx]\n", entry->first_lba, entry->last_lba);
 		printf("Size:\t\t");
 		print_human_size(size_b);
 		if (size_b >= 1024) printf(" (%llu)", size_b);
 		printf("\n");
 
 		printf("Attributes:\t");
-		for (j=48;j<48+8;j++)
+		for (j=0;j<8;j++)
 		{
-			printf("%02x ", buf[j]);
+			printf("%02x ", entry->attr[j]);
 		}
 		printf("\n\n");
 	}

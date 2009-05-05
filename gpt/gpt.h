@@ -30,4 +30,14 @@ typedef struct
 	uint8_t zeros[420];
 } __attribute__((__packed__)) GPT_HEADER;
 
+typedef struct
+{
+	uint8_t type_uuid[16];
+	uint8_t unique_uuid[16];
+	uint64_t first_lba;
+	uint64_t last_lba; //inclusive, usually odd
+	uint8_t	attr[8];
+	uint8_t name[72];
+} __attribute__((__packed__)) GPT_ENTRY;
+
 #endif
