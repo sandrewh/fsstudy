@@ -1,6 +1,6 @@
 CFLAGS=-g -Wall
 
-gpt : gpt.c crc32.o
+gpt : gpt.c gpt.h crc32.o
 	gcc $(CFLAGS) -o gpt gpt.c crc32.o
 
 clean :
