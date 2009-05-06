@@ -139,23 +139,33 @@ cmd_ls (ext2_info *ext2, int argc, char *argv[])
 			/* TODO: sticky bit */			
 			
 			if (f_in.i_mode & EXT2_S_IFDIR) printf("d");
+			else if (f_in.i_mode & EXT2_S_IFLNK) printf("l");
 			else printf("-");
+			
 			if (f_in.i_mode & EXT2_S_IRUSR) printf("r");
 			else printf("-");
+			
 			if (f_in.i_mode & EXT2_S_IWUSR) printf("w");
 			else printf("-");
+			
 			if (f_in.i_mode & EXT2_S_IXUSR) printf("x");
 			else printf("-");
+			
 			if (f_in.i_mode & EXT2_S_IRGRP) printf("r");
 			else printf("-");
+			
 			if (f_in.i_mode & EXT2_S_IWGRP) printf("w");
 			else printf("-");
+			
 			if (f_in.i_mode & EXT2_S_IXGRP) printf("x");
 			else printf("-");
+			
 			if (f_in.i_mode & EXT2_S_IROTH) printf("r");
 			else printf("-");
+			
 			if (f_in.i_mode & EXT2_S_IWOTH) printf("w");
 			else printf("-");
+			
 			if (f_in.i_mode & EXT2_S_IXOTH) printf("x");
 			else printf("-");
 
@@ -182,16 +192,6 @@ cmd_ls (ext2_info *ext2, int argc, char *argv[])
 void
 cmd_info (ext2_info *ext2, int argc, char *argv[])
 {
-#if 0
-	typedef struct 
-	{
-		unsigned int volume_offset;
-		unsigned int super_block_offset;
-		super_block s;
-		unsigned int bytes_per_block;
-		FILE* f;
-	} ext2_info;	
-#endif
 	printf("volume_offset:\t\t%u b\n", ext2->volume_offset);
 	printf("super_block_offset:\t%u b\n", ext2->super_block_offset);
 	printf("bytes_per_block:\t%u\n", ext2->bytes_per_block);

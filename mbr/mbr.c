@@ -128,6 +128,7 @@ parse_part (FILE *f, unsigned char *current_record, unsigned int lba_rel)
 		/* handle extended partitions */
 		if (type == 0x05)
 		{
+			printf("Warning: Extended Partition Detected - this feature not tested\n");
 			parse_ebr(f, lba);
 		}
 	}
