@@ -6,8 +6,8 @@
 //http://www.linux-ntfs.org/doku.php?id=howto:hexedityourway
 //http://technet.microsoft.com/en-us/library/cc781134.aspx#w2k3tr_ntfs_how_dhao
 
-
-ntfs_info* ntfs_mount(FILE* f, unsigned int partition_start_sector)
+ntfs_info*
+ntfs_mount (FILE* f, unsigned int partition_start_sector)
 {
 	ntfs_info *ntfs = malloc(sizeof(ntfs_info));
 	ntfs->bpb.bytes_per_sector = 512;
@@ -48,7 +48,8 @@ ntfs_info* ntfs_mount(FILE* f, unsigned int partition_start_sector)
 	return ntfs;
 }
 
-void ntfs_umount(ntfs_info *ntfs)
+void
+ntfs_umount (ntfs_info *ntfs)
 {
 	free(ntfs); ntfs = 0;
 }

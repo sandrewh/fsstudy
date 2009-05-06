@@ -9,7 +9,8 @@
  *
  */
 
-void read_sector(part_info *p, char* buffer, unsigned int sector)
+void
+read_sector (part_info *p, char* buffer, unsigned int sector)
 {
 #if USE_CACHE
 	cache_read_sector(p, buffer, sector);
@@ -18,7 +19,8 @@ void read_sector(part_info *p, char* buffer, unsigned int sector)
 #endif
 }
 
-void read_cluster(part_info *p, char* buffer, unsigned int cluster)
+void
+read_cluster (part_info *p, char* buffer, unsigned int cluster)
 {
 	unsigned int sector_num;
 	for (sector_num=0; sector_num<p->sectors_per_cluster;sector_num++)
@@ -27,7 +29,8 @@ void read_cluster(part_info *p, char* buffer, unsigned int cluster)
 
 // TODO: load entire fat into memory? or just cache accesses?
 
-unsigned int read_cluster_chain(part_info *p, unsigned int first_cluster, char* buffer, size_t size, off_t offset)
+unsigned int
+read_cluster_chain (part_info *p, unsigned int first_cluster, char* buffer, size_t size, off_t offset)
 {
 	unsigned int cur_cluster = first_cluster;		
 	if (!cur_cluster) return 0; /* no chain provided */
@@ -72,7 +75,8 @@ unsigned int read_cluster_chain(part_info *p, unsigned int first_cluster, char* 
  *
  */
 
-unsigned int find_free_cluster(part_info *p, unsigned int hint)
+unsigned int
+find_free_cluster (part_info *p, unsigned int hint)
 {
 	/* TODO: find_free_cluster: use random search? */
 	if (!hint) hint = 2;
@@ -89,7 +93,8 @@ unsigned int find_free_cluster(part_info *p, unsigned int hint)
 	return 0; /* disk full */
 }
 
-void write_sector(part_info *p, char* buffer, unsigned int sector)
+void
+write_sector (part_info *p, char* buffer, unsigned int sector)
 {
 #if USE_CACHE
 	cache_write_sector(p, buffer, sector);
@@ -98,7 +103,8 @@ void write_sector(part_info *p, char* buffer, unsigned int sector)
 #endif
 }
 
-void write_cluster(part_info *p, char* buffer, unsigned int cluster)
+void
+write_cluster (part_info *p, char* buffer, unsigned int cluster)
 {
 	unsigned int sector_num;
 	for (sector_num=0; sector_num<p->sectors_per_cluster;sector_num++)
@@ -107,7 +113,8 @@ void write_cluster(part_info *p, char* buffer, unsigned int cluster)
 
 //TODO: this needs to be optimized for successive calls (N^2 hurts for large files)
 //		perhaps provide a hint? - not sure
-unsigned int write_cluster_chain(part_info *p, unsigned int first_cluster, char* buffer, size_t size, off_t offset)
+unsigned int
+write_cluster_chain (part_info *p, unsigned int first_cluster, char* buffer, size_t size, off_t offset)
 {
 //	printf("write_cluster_chain: first_cluster: %#x, size: %#x, offset: %#x\n", first_cluster, size, offset);
 	unsigned int cur_cluster = first_cluster;		
@@ -172,7 +179,8 @@ unsigned int write_cluster_chain(part_info *p, unsigned int first_cluster, char*
 }
 
 
-unsigned int allocate_new_cluster(part_info *p, unsigned int hint)
+unsigned int
+allocate_new_cluster (part_info *p, unsigned int hint)
 {
 	unsigned int new_cluster = find_free_cluster(p, hint);
 	if (!new_cluster)
@@ -190,7 +198,8 @@ unsigned int allocate_new_cluster(part_info *p, unsigned int hint)
 // should do the following:
 // if N is the number of clusters in the chain, 
 // free's N-len clusters from end of chain
-void truncate_cluster_chain(part_info *p, unsigned int first_cluster, size_t len)
+void
+truncate_cluster_chain (part_info *p, unsigned int first_cluster, size_t len)
 {
 //	printf("truncate_cluster_chain: first_cluster: %#x, len: %#x\n", first_cluster, len);
 	

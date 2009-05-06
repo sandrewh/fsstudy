@@ -140,15 +140,14 @@ void parse_gpt(FILE* f) {
 		printf("Interesting: Slot Size = %u (should be 128, but Apple said it might change)\n", header.partition_entry_size);
 	}
 
-	/* LBA 2 */
-	fseek(f, 2*BYTES_PER_LBA, SEEK_SET); 
+	fseek(f, header.partition_entries_first_lba*BYTES_PER_LBA, SEEK_SET); 
 
 	uint32_t calc_table_crc32 = 0;
 	unsigned char buf[header.partition_entry_size];
 	/* /entry/ interprets data in buf */
 	/* because partition_entry_size may be > 128 (the size of GPT_ENTRY), it has to be done this way */
 	GPT_ENTRY *entry = (GPT_ENTRY*)&buf; 
-	
+
 	int i;
 	for (i=0; i<(header.num_partition_entries); i++)
 	{		

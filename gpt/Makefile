@@ -7,5 +7,5 @@ clean :
 	rm *.o
 	rm gpt
 	rm -r gpt.dSYM/
-	
+
 crc32.o : crc32.c

@@ -11,7 +11,8 @@
 const unsigned int PRETTY_GUID_LEN =	16	/* hex digits */
 										+ 4	/* dashes */;
 
-void print_human_size(float size)
+void
+print_human_size (float size)
 {
 /*
 	if (!size) 
@@ -32,7 +33,8 @@ void print_human_size(float size)
 
 
 /* print pretty 128-bit guid */
-void sprint_guid(char *dst, unsigned char* b)
+void
+sprint_guid (char *dst, unsigned char* b)
 {
 	sprintf(dst, "%02X%02X%02X%02X-%02X%02X-%02X%02X-%02X%02X-%02X%02X%02X%02X%02X%02X",
 		b[3], b[2], b[1], b[0], /* first block is reversed */
@@ -42,7 +44,8 @@ void sprint_guid(char *dst, unsigned char* b)
 		b[10], b[11], b[12], b[13], b[14], b[15]); /* NOT reversed */
 }
 
-void cmd_read(ext2_info *ext2, int argc, char *argv[])
+void
+cmd_read (ext2_info *ext2, int argc, char *argv[])
 {
 	if (argc < 1)
 	{
@@ -82,7 +85,8 @@ void cmd_read(ext2_info *ext2, int argc, char *argv[])
 	free(d);
 }
 
-void cmd_ls(ext2_info *ext2, int argc, char *argv[])
+void
+cmd_ls (ext2_info *ext2, int argc, char *argv[])
 {
 	if (argc < 1)
 	{
@@ -175,7 +179,8 @@ void cmd_ls(ext2_info *ext2, int argc, char *argv[])
 	printf("\n%d entries.\n", total_entries_read);	
 }
 
-void cmd_info(ext2_info *ext2, int argc, char *argv[])
+void
+cmd_info (ext2_info *ext2, int argc, char *argv[])
 {
 #if 0
 	typedef struct 
@@ -246,7 +251,8 @@ void cmd_info(ext2_info *ext2, int argc, char *argv[])
 	}
 }
 
-int main(int argc, char *argv[]) {
+int
+main (int argc, char *argv[]) {
 	char *path = 0;
 	unsigned int lba = 0x0;
 	char **sub_argv = 0;

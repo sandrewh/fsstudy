@@ -35,6 +35,7 @@
 #define EXT2_S_IWOTH	0x0002	//others write
 #define EXT2_S_IXOTH	0x0001	//others execute
 
+/* super block */
 typedef struct
 {
 	unsigned int s_inodes_count;
@@ -81,6 +82,7 @@ typedef struct
 	
 } __attribute__((__packed__)) super_block;
 
+/* block group descriptor */
 typedef struct
 {
 	unsigned int bg_block_bitmap;
@@ -95,6 +97,7 @@ typedef struct
 	unsigned char bg_reserved[12];
 } __attribute__((__packed__)) bg_desc;
 
+/* inode */
 typedef struct
 {
 	unsigned short i_mode;
@@ -123,6 +126,7 @@ typedef struct
 	unsigned char i_osd2[12];
 } __attribute__((__packed__)) inode;
 
+/* directory entry */
 typedef struct
 {
 	unsigned int inode;

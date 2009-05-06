@@ -8,7 +8,8 @@ const int MAX_NUM_RECORDS = 4;
 
 void parse_part(FILE *f, unsigned char *current_record, unsigned int lba_rel);
 
-void print_part_type(unsigned char type)
+void
+print_part_type (unsigned char type)
 {
 	switch (type)
 	{
@@ -44,7 +45,8 @@ void print_part_type(unsigned char type)
 	}
 }
 
-void print_human_size(float size)
+void
+print_human_size (float size)
 {
 	if (!size) 
 	{
@@ -62,7 +64,8 @@ void print_human_size(float size)
 	printf("%.1f %c", size, a);
 }
 
-char get_boot_char(unsigned char b)
+char
+get_boot_char (unsigned char b)
 {
 	switch (b)
 	{
@@ -73,7 +76,8 @@ char get_boot_char(unsigned char b)
 }
 
 /* see: http://en.wikipedia.org/wiki/Extended_boot_record */
-void parse_ebr(FILE *f, unsigned int lba)
+void
+parse_ebr (FILE *f, unsigned int lba)
 {
 	const int BUFFER_SIZE = (BYTES_PER_RECORD * MAX_NUM_RECORDS) + MBR_SIG_SIZE;	
 
@@ -97,7 +101,8 @@ void parse_ebr(FILE *f, unsigned int lba)
 	parse_ebr(f, lba+next_lba_rel);	
 }
 
-void parse_part(FILE *f, unsigned char *current_record, unsigned int lba_rel)
+void
+parse_part (FILE *f, unsigned char *current_record, unsigned int lba_rel)
 {
 	unsigned char boot = (unsigned char)current_record[0];
 	unsigned char type = (unsigned char)current_record[4];
@@ -128,7 +133,8 @@ void parse_part(FILE *f, unsigned char *current_record, unsigned int lba_rel)
 	}
 }
 
-void parse_mbr(FILE* f) {
+void
+parse_mbr (FILE* f) {
 	const int MBR_OFFSET = 0x1b8;
 	const int DISC_SIG_SIZE = 4;
 	const int NULLS_SIZE = 2;
@@ -160,7 +166,8 @@ void parse_mbr(FILE* f) {
 	}
 }
 
-int main(int argc, char *argv[]) {	
+int
+main (int argc, char *argv[]) {	
 	FILE* f = fopen(argv[1], "r");
 	if (!f)
 	{

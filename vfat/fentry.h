@@ -3,13 +3,15 @@
 
 static const int FILE_ENTRY_SIZE = 0x20;
 
-typedef struct {
+typedef struct
+{
 	unsigned char h, min, s;
 	unsigned char mon, d;
 	unsigned int y;
 } DateTime;
 
-typedef struct {
+typedef struct
+{
 	unsigned int first_cluster;
 	unsigned int size_bytes;
 	char name[13];

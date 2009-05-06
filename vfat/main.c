@@ -12,7 +12,8 @@
  *
  */
 
-void print_human_size(float size)
+void
+print_human_size (float size)
 {
 	if (!size) 
 	{
@@ -30,7 +31,8 @@ void print_human_size(float size)
 	printf("%6.1f%c", size, a);
 }
 
-void cmd_read(part_info *p, char* path)
+void
+cmd_read (part_info *p, char* path)
 {
 	f_entry *f = fentry_from_path(p, path);
 
@@ -48,7 +50,8 @@ void cmd_read(part_info *p, char* path)
 	}	
 }
 
-void cmd_ls(part_info *p, char *path)
+void
+cmd_ls (part_info *p, char *path)
 {
 	f_entry *d = fentry_from_path(p, path);
 	if (!d)
@@ -123,7 +126,8 @@ void cmd_ls(part_info *p, char *path)
  *
  */
 
-void cmd_write(part_info *p, char* path)
+void
+cmd_write (part_info *p, char* path)
 {
 	printf("writing to %s\n", path);
 	
@@ -170,7 +174,8 @@ void cmd_write(part_info *p, char* path)
 	file_size_to_disk(p, f);
 }
 
-int cmd_mv(part_info *p, char* src_path, char* dst_path)
+int
+cmd_mv (part_info *p, char* src_path, char* dst_path)
 {
 	printf("moving %s => %s\n", src_path, dst_path);
 	f_entry *f = fentry_from_path(p, dst_path);
@@ -208,13 +213,15 @@ int cmd_mv(part_info *p, char* src_path, char* dst_path)
 	return 0;
 }
 
-int cmd_mkfile(part_info *p, char* file_path)
+int
+cmd_mkfile (part_info *p, char* file_path)
 {
 	printf("creating file '%s'\n", file_path);
 	return entry_create(p, file_path, 0x0);
 }
 
-int cmd_mkdir(part_info *p, char* dir_path)
+int
+cmd_mkdir (part_info *p, char* dir_path)
 {
 	printf("creating directory '%s'\n", dir_path);
 	//TODO: create '.' and '..' directories in new directory
@@ -223,7 +230,8 @@ int cmd_mkdir(part_info *p, char* dir_path)
 	return entry_create(p, dir_path, 0x10); //0x10 = subdir
 }
 
-void cmd_rmdir(part_info *p, char *path)
+void
+cmd_rmdir (part_info *p, char *path)
 {
 	f_entry *d = fentry_from_path(p, path);
 	if (!d)
@@ -256,7 +264,8 @@ void cmd_rmdir(part_info *p, char *path)
 	file_rem(p, path);
 }
 
-void cmd_rmfile(part_info *p, char *path)
+void
+cmd_rmfile (part_info *p, char *path)
 {
 	f_entry *f = fentry_from_path(p, path);
 	if (!f)
@@ -278,7 +287,8 @@ void cmd_rmfile(part_info *p, char *path)
  *
  */
 
-void cmd_readcluster(part_info *p, char* strcluster)
+void
+cmd_readcluster (part_info *p, char* strcluster)
 {
 	char buffer[p->bytes_per_cluster];
 	read_cluster(p, buffer, strtol(strcluster,0,0));
@@ -291,7 +301,8 @@ void cmd_readcluster(part_info *p, char* strcluster)
 	printf("\n\n");
 }
 
-void cmd_printclusterchain(part_info *p, char* strcluster)
+void
+cmd_printclusterchain (part_info *p, char* strcluster)
 {
 	unsigned int cluster = strtol(strcluster, 0, 0);
 	for(;;)
@@ -308,12 +319,14 @@ void cmd_printclusterchain(part_info *p, char* strcluster)
 	printf("\n");
 }
 
-void cmd_readfat(part_info *p, char* strcluster)
+void
+cmd_readfat (part_info *p, char* strcluster)
 {
 	printf("%#x\n", read_fat(p, strtol(strcluster,0,0)));
 }
 
-void cmd_dumpdir(part_info *p, char* path)
+void
+cmd_dumpdir (part_info *p, char* path)
 {
 	f_entry *f = fentry_from_path(p, path);
 	
@@ -365,7 +378,8 @@ void cmd_dumpdir(part_info *p, char* path)
 	free(f);
 }
 
-void cmd_info(part_info *p)
+void
+cmd_info (part_info *p)
 {
 	printf("OEM String: %s\n", p->oem);
 
@@ -389,7 +403,8 @@ void cmd_info(part_info *p)
 	printf("%.2f%% full\n", 100.0 - 100.0 * (float)p->free_clusters * (float)p->sectors_per_cluster / (float)p->num_data_clusters);
 }
 
-void cmd_todo()
+void
+cmd_todo ()
 {
 	printf("commands:\n");
 	printf("\tread\t[/path/to/file]\t- write contents of file to stdout\n");
@@ -414,7 +429,8 @@ void cmd_todo()
 	printf("\t\t ./vfat -f Win98.img -s 0x3f [cmd] \n");
 }
 
-int main(int argc, char *argv[]) {	
+int
+main (int argc, char *argv[]) {	
 	FILE* f = fopen(argv[1], "r+");
 	if (!f)
 	{

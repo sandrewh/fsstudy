@@ -1,6 +1,7 @@
 #include "block.h"
 
-unsigned int block_read(ext2_info *ext2, char* buffer, unsigned int block_num)
+unsigned int
+block_read (ext2_info *ext2, char* buffer, unsigned int block_num)
 {
 	/* seek to the location of the block */
 	if (fseek(ext2->f, ext2->volume_offset + block_num*ext2->bytes_per_block, SEEK_SET))
@@ -10,7 +11,8 @@ unsigned int block_read(ext2_info *ext2, char* buffer, unsigned int block_num)
 	return fread(buffer, ext2->bytes_per_block, 1, ext2->f) * ext2->bytes_per_block;
 }
 
-unsigned int super_block_read(ext2_info *ext2)
+unsigned int
+super_block_read (ext2_info *ext2)
 {
 	/* OPT: check super_block magic number
 		if bad, try other superblocks */
@@ -25,7 +27,8 @@ unsigned int super_block_read(ext2_info *ext2)
 	return ret;
 }
 
-void bg_desc_read(ext2_info *ext2, bg_desc *bg, unsigned int bg_num)
+void
+bg_desc_read (ext2_info *ext2, bg_desc *bg, unsigned int bg_num)
 {
 	/* OPT: should read bg_desc from a "closer" bg
 		for now, just read the first copy */
@@ -40,7 +43,8 @@ void bg_desc_read(ext2_info *ext2, bg_desc *bg, unsigned int bg_num)
 }
 
 #if 0
-unsigned int block_write(ext2_info *ext2, char* buffer, unsigned int block_num)
+unsigned int
+block_write (ext2_info *ext2, char* buffer, unsigned int block_num)
 {
 	fseek(ext2->f, ext2->volume_offset + block_num*ext2->bytes_per_block, SEEK_SET);
 	/* fread return # of items read (0 or 1) */

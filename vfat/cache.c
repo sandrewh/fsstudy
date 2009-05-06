@@ -6,7 +6,8 @@
  *
  */
 
-unsigned int read_fat(part_info *p, unsigned int cluster)
+unsigned int
+read_fat (part_info *p, unsigned int cluster)
 {
 	/* only use 1st fat, for now */
 	// TODO: why use other fats? */
@@ -17,14 +18,16 @@ unsigned int read_fat(part_info *p, unsigned int cluster)
 #endif
 }
 
-void raw_read_sector(part_info *p, char* buffer, unsigned int sector)
+void
+raw_read_sector (part_info *p, char* buffer, unsigned int sector)
 {
 //	printf("read_sector: %#x\n", sector);
 	fseek(p->f, (p->first_sector + sector) * p->bytes_per_sector, SEEK_SET);	
 	fread(buffer, 1, p->bytes_per_sector, p->f);
 }
 
-unsigned int raw_read_fat(part_info *p, unsigned int cluster)
+unsigned int
+raw_read_fat (part_info *p, unsigned int cluster)
 {
 	unsigned int ret;
 	fseek(p->f, (p->first_sector + p->fat_first_sector) * p->bytes_per_sector + cluster * 4, SEEK_SET);	
@@ -36,24 +39,28 @@ unsigned int raw_read_fat(part_info *p, unsigned int cluster)
 // TODO: add caching of sectors
 
 /* initialize the cache */
-void cache_init(part_info *p)
+void
+cache_init (part_info *p)
 {
 	
 }
 
-void cache_read_sector(part_info *p, char *buffer, unsigned int sector)
+void
+cache_read_sector (part_info *p, char *buffer, unsigned int sector)
 {
 	
 }
 
-unsigned int cache_read_fat(part_info *p, unsigned int cluster)
+unsigned int
+cache_read_fat (part_info *p, unsigned int cluster)
 {
 	return 0;
 }
 
 /* write "dirty"? cache to disk */
 /* free cache memory */
-void cache_flush(part_info *p)
+void
+cache_flush (part_info *p)
 {
 	
 }
@@ -64,14 +71,16 @@ void cache_flush(part_info *p)
  *
  */
 
-void raw_write_sector(part_info *p, char* buffer, unsigned int sector)
+void
+raw_write_sector (part_info *p, char* buffer, unsigned int sector)
 {
 //	printf("write_sector: %#x\n", sector);
 	fseek(p->f, (p->first_sector + sector) * p->bytes_per_sector, SEEK_SET);	
 	fwrite(buffer, 1, p->bytes_per_sector, p->f);
 }
 
-void write_fat(part_info *p, unsigned int cluster, unsigned int value)
+void
+write_fat (part_info *p, unsigned int cluster, unsigned int value)
 {
 	/* write entry to all fats */
 	value &= 0xFFFFFFF; /* neccessary? */
@@ -83,7 +92,8 @@ void write_fat(part_info *p, unsigned int cluster, unsigned int value)
 #endif
 }
 
-void raw_write_fat(part_info *p, unsigned int cluster, unsigned int value)
+void
+raw_write_fat (part_info *p, unsigned int cluster, unsigned int value)
 {
 	// update p->free_clusters, if neccesary
 	unsigned int old_value = read_fat(p, cluster);
@@ -101,11 +111,13 @@ void raw_write_fat(part_info *p, unsigned int cluster, unsigned int value)
 	}	
 }
 
-void cache_write_sector(part_info *p, char *buffer, unsigned int sector)
+void
+cache_write_sector (part_info *p, char *buffer, unsigned int sector)
 {
 	
 }
-void cache_write_fat(part_info *p, unsigned int cluster, unsigned int value)
+void
+cache_write_fat (part_info *p, unsigned int cluster, unsigned int value)
 {
 	
 }

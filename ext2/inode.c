@@ -1,7 +1,8 @@
 #include "inode.h"
 #include "block.h"
 
-void inode_read(ext2_info *ext2, inode *in, unsigned int inode_num)
+void
+inode_read (ext2_info *ext2, inode *in, unsigned int inode_num)
 {
 	/* determine the block group that contains the inode table that contains the inode */
 	unsigned int block_group_num = (inode_num - 1) / ext2->s.s_inodes_per_group;

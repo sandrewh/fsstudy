@@ -6,7 +6,8 @@
 #include <stdio.h> //printf
 #include <stdlib.h> //exit
 
-void f_entry_set_attr(f_entry *file, unsigned char attr)
+void
+f_entry_set_attr (f_entry *file, unsigned char attr)
 {
 	file->attr_r = (attr & 0x01);
 	file->attr_h = (attr & 0x02);
@@ -16,12 +17,14 @@ void f_entry_set_attr(f_entry *file, unsigned char attr)
 	file->attr_a = (attr & 0x20);
 }
 
-unsigned char f_entry_get_attr(f_entry *file)
+unsigned char
+f_entry_get_attr (f_entry *file)
 {
 	return file->attr_r | file->attr_h | file->attr_s | file->attr_v | file->attr_d | file->attr_a;
 }
 
-void datetime_decode(DateTime* dt, unsigned char d1, unsigned char d2, unsigned char t1, unsigned char t2)
+void
+datetime_decode (DateTime* dt, unsigned char d1, unsigned char d2, unsigned char t1, unsigned char t2)
 {
 	dt->h = t2 >> 3;
 	dt->min = (t1 >> 5) | ((t2 & 0x07) << 3);
@@ -32,7 +35,8 @@ void datetime_decode(DateTime* dt, unsigned char d1, unsigned char d2, unsigned 
 	dt->d = d1 & 0x1f;
 }
 
-void f_entry_set_datetimes(f_entry *file, char* entry)
+void
+f_entry_set_datetimes (f_entry *file, char* entry)
 {
 	//todo: add created time-fine res. 10 ms units [0, 199] stored in 0x0d (1 byte)
 	datetime_decode(&file->created, entry[0x10], entry[0x11], entry[0x0e], entry[0x0f]);
@@ -40,7 +44,8 @@ void f_entry_set_datetimes(f_entry *file, char* entry)
 	datetime_decode(&file->modified, entry[0x18], entry[0x19], entry[0x16], entry[0x17]);
 }
 
-void from_utf16(char* buffer, int len)
+void
+from_utf16 (char* buffer, int len)
 {
 	int i;
 	for (i=0;i<len;i++)
@@ -52,7 +57,8 @@ void from_utf16(char* buffer, int len)
 	}
 }
 
-void to_utf16(char* buffer, int len, int cap)
+void
+to_utf16 (char* buffer, int len, int cap)
 {
 	int i;
 	for (i=len-1;i>=0;i--)
@@ -67,7 +73,8 @@ void to_utf16(char* buffer, int len, int cap)
 	}
 }
 
-void f_entry_update_lfn(f_entry *file, char* entry)
+void
+f_entry_update_lfn (f_entry *file, char* entry)
 {
 	/* firsy lfn in series? */
 	if (entry[0] & 0x40) file->lfn[0] = 0;
@@ -87,7 +94,8 @@ void f_entry_update_lfn(f_entry *file, char* entry)
 	strcpy(file->lfn, lfn_piece);	
 }
 
-void fentry_set_unique_name_from_lfn(f_entry *f)
+void
+fentry_set_unique_name_from_lfn (f_entry *f)
 {
 	//TODO: generate meaningful names
 	// see: http://en.wikipedia.org/wiki/8.3_filename
@@ -126,7 +134,8 @@ void fentry_set_unique_name_from_lfn(f_entry *f)
 	}
 }
 
-void fentry_convert_name_to_8_3(f_entry *f)
+void
+fentry_convert_name_to_8_3 (f_entry *f)
 {
 	if (f->attr_d)
 	{
@@ -177,7 +186,8 @@ void fentry_convert_name_to_8_3(f_entry *f)
 }
 
 /* courtesy http://en.wikipedia.org/wiki/File_Allocation_Table */
-unsigned char lfn_checksum(const unsigned char *pFcbName)
+unsigned char
+lfn_checksum (const unsigned char *pFcbName)
 {
 	int i;
 	unsigned char sum=0;
@@ -187,7 +197,8 @@ unsigned char lfn_checksum(const unsigned char *pFcbName)
 	return sum;
 }
 
-void f_entry_set_name_from_8_3(f_entry *file)
+void
+f_entry_set_name_from_8_3 (f_entry *file)
 {
 	int j, i = 0;
 	/* make the file lowercase */
@@ -220,7 +231,8 @@ void f_entry_set_name_from_8_3(f_entry *file)
 }
 
 #if 0
-f_entry* fentry_from_subpath(part_info *p, f_entry *d, char* path)
+f_entry*
+fentry_from_subpath (part_info *p, f_entry *d, char* path)
 {
 	path = strdup(path);
 	char *search_name = strtok(path, "/");	
