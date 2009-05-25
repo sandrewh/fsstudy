@@ -113,7 +113,7 @@ cmd_ls (ext2_info *ext2, int argc, char *argv[])
 	printf("Directory listing of %s (inode:%x)\n", path, d->inode);
 
 	inode in;
-	inode_read(ext2, &in, d->inode);	
+	inode_read(ext2, &in, d->inode);
 
 	free(d->name);
 	free(d);
@@ -134,8 +134,8 @@ cmd_ls (ext2_info *ext2, int argc, char *argv[])
 			inode_read(ext2, &f_in, entries[i].inode);	
 			
 			// TODO: use 64-bit size
-			/* TODO: set process uid */
-			/* TODO: set process gid */
+			/* TODO: set process uid bit */
+			/* TODO: set process gid bit */
 			/* TODO: sticky bit */			
 			
 			if (f_in.i_mode & EXT2_S_IFDIR) printf("d");
