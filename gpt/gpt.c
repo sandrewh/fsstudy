@@ -125,7 +125,7 @@ void parse_gpt(FILE* f) {
 	/* print disk guid */
 	char pretty_guid[PRETTY_GUID_LEN+1];
 	sprint_guid(pretty_guid, header.disk_uuid);
-	printf("Disk UUID: %s\n\n", pretty_guid);
+	printf("Medium UUID: %s\n\n", pretty_guid);
 	
 	if (header.partition_entries_first_lba != 2)
 	{
