@@ -106,9 +106,11 @@ cmd_ls (part_info *p, char *path)
 
 			printf("%3x ", entries[i].dir_num_slots);
 			
+			printf("%-12s  ", entries[i].name);
+			
 			if (entries[i].lfn[0])
 			{
-				printf("%s (%s)\n", entries[i].lfn, entries[i].name);	
+				printf("%s\n", entries[i].lfn);					
 			} else {
 				printf("%s\n", entries[i].name);				
 			}
@@ -396,7 +398,7 @@ cmd_info (part_info *p)
 	printf("Volume Label: %s\n", p->label);
 	printf("Free Clusters: %#x\n", p->free_clusters);
 	printf("Partition Size: ");
-	print_human_size(p->total_sectors * p->bytes_per_sector);
+	print_human_size((float)p->total_sectors * p->bytes_per_sector);
 	printf(" -");
 	print_human_size(p->reserved_sectors+(p->num_fats*p->sectors_per_fat)*p->bytes_per_sector);
 	printf(" for filesystem\n");
@@ -431,7 +433,7 @@ cmd_todo ()
 
 int
 main (int argc, char *argv[]) {	
-	FILE* f = fopen(argv[1], "r+");
+	FILE* f = fopen(argv[1], "r");
 	if (!f)
 	{
 		printf("fopen: failed opening %s\n", argv[1]);
