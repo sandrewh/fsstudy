@@ -3,6 +3,8 @@
 
 #include <stdio.h>
 
+#include "../util/cache.h"
+
 #define EXT2_ROOT_INO 2
 #define EXT2_FT_DIR 2
 
@@ -153,6 +155,7 @@ typedef struct
 	super_block s;
 	unsigned int bytes_per_block;
 	FILE* f;
+	CACHE* cache;
 } ext2_info;
 
 #endif

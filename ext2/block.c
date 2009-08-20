@@ -1,14 +1,28 @@
 #include "block.h"
+#include "../util/cache.h"
 
 unsigned int
 block_read (ext2_info *ext2, char* buffer, unsigned int block_num)
 {
-	/* seek to the location of the block */
-	if (fseek(ext2->f, ext2->volume_offset + block_num*ext2->bytes_per_block, SEEK_SET))
-		return 0;
-	/* read the block to [buffer]
-		fread return # of items read (0 or 1) */
-	return fread(buffer, ext2->bytes_per_block, 1, ext2->f) * ext2->bytes_per_block;
+	size_t ret;
+	
+	if (!cache_get(ext2->cache, buffer, block_num))
+	{
+//		printf("block_read: block_num=0x%x\n", block_num);
+
+		/* seek to the location of the block */
+		if (fseek(ext2->f, ext2->volume_offset + block_num*ext2->bytes_per_block, SEEK_SET))
+			return 0;
+		/* read the block to [buffer]
+			fread return # of items read (0 or 1) */
+		ret = fread(buffer, ext2->bytes_per_block, 1, ext2->f) * ext2->bytes_per_block;	
+		
+		cache_set(ext2->cache, buffer, block_num);
+	} else {
+		ret = ext2->bytes_per_block;
+	}
+	
+	return ret;
 }
 
 unsigned int

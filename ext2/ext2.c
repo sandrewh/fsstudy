@@ -319,7 +319,7 @@ ext2_mount (FILE* f, unsigned int partition_start_sector)
 		free(ext2);
 		return 0;
 	}
-
+	
 	if (ext2->s.s_magic != EXT2_SUPER_BLOCK_MAGIC)
 	{
 		printf("ext2_mount: failed: super block magic number = %#x (should be %#x)\n", ext2->s.s_magic, EXT2_SUPER_BLOCK_MAGIC);
@@ -331,6 +331,8 @@ ext2_mount (FILE* f, unsigned int partition_start_sector)
 	{
 		printf("ext2_mount: warning: fs was not unmounted cleanly - errors may exist!\n");
 	}
+	
+	ext2->cache = cache_create(ext2->bytes_per_block);		
 
 	return ext2;
 }
@@ -339,5 +341,6 @@ void
 ext2_umount (ext2_info *ext2)
 {
 	/* writeable mounts not yet supported, therefor not much cleanup for now */
+	cache_destroy(ext2->cache);
 	free(ext2); ext2 = 0;
 }
