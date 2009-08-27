@@ -32,13 +32,19 @@ print_human_size (float size)
 }
 
 void
-cmd_read (part_info *p, char* path)
+cmd_read (part_info *vfat, int argc, char *argv[])
 {
-	f_entry *f = fentry_from_path(p, path);
+	if (argc < 1)
+	{
+		printf("read: error, no path given\n");
+		return;
+	}	
+	
+	f_entry *f = fentry_from_path(vfat, argv[0]);
 
 	char buffer[READ_WRITE_BUFFER_SIZE];
 	unsigned int total_bytes_read = 0;
-	unsigned int bytes_read = read_file(p, f, buffer, READ_WRITE_BUFFER_SIZE, 0);
+	unsigned int bytes_read = read_file(vfat, f, buffer, READ_WRITE_BUFFER_SIZE, 0);
 	
 	while (bytes_read)
 	{
@@ -46,14 +52,22 @@ cmd_read (part_info *p, char* path)
 	
 		fwrite(buffer, bytes_read, 1, stdout);
 		
-		bytes_read = read_file(p, f, buffer, READ_WRITE_BUFFER_SIZE, total_bytes_read);
+		bytes_read = read_file(vfat, f, buffer, READ_WRITE_BUFFER_SIZE, total_bytes_read);
 	}	
 }
 
 void
-cmd_ls (part_info *p, char *path)
+cmd_ls (part_info *vfat, int argc, char *argv[])
 {
-	f_entry *d = fentry_from_path(p, path);
+	if (argc < 1)
+	{
+		printf("ls: error, no directory given\n");
+		return;
+	}	
+	
+	char * path = argv[0];
+	
+	f_entry *d = fentry_from_path(vfat, path);
 	if (!d)
 	{
 		printf("Directory %s not found.\n", path);
@@ -72,7 +86,7 @@ cmd_ls (part_info *p, char *path)
 
 	f_entry entries[LS_FILES_BUFFER_SIZE];
 	unsigned int total_files_read = 0;
-	unsigned int files_read = read_dir(p, path, entries, LS_FILES_BUFFER_SIZE, 0);
+	unsigned int files_read = read_dir(vfat, path, entries, LS_FILES_BUFFER_SIZE, 0);
 	
 	while (files_read)
 	{
@@ -116,7 +130,7 @@ cmd_ls (part_info *p, char *path)
 			}
 		}
 
-		files_read = read_dir(p, path, entries, LS_FILES_BUFFER_SIZE, total_files_read);
+		files_read = read_dir(vfat, path, entries, LS_FILES_BUFFER_SIZE, total_files_read);
 	}
 	
 	printf("%d entries.\n", total_files_read);
@@ -129,16 +143,24 @@ cmd_ls (part_info *p, char *path)
  */
 
 void
-cmd_write (part_info *p, char* path)
+cmd_write (part_info *vfat, int argc, char *argv[])
 {
+	if (argc < 1)
+	{
+		printf("write: error, no path given\n");
+		return;
+	}	
+	
+	char * path = argv[0];
+	
 	printf("writing to %s\n", path);
 	
-	f_entry *f = fentry_from_path(p, path);
+	f_entry *f = fentry_from_path(vfat, path);
 	if (!f) /* if the file does not exist, create it */
 	{
 #if CREATE_FILE_ON_WRITE
-		if (!cmd_mkfile(p, path)) return;
-		f = fentry_from_path(p, path);
+		if (!cmd_mkfile(vfat, 1, argv)) return;
+		f = fentry_from_path(vfat, path);
 //		printf("f->first_cluster: %#x\n", f->first_cluster); free(f); return;
 #else
 		printf("file %s does not exist, use mkfile %s to create it\n", path, path);
@@ -146,9 +168,9 @@ cmd_write (part_info *p, char* path)
 #endif	
 	} else { /* the file does exist */
 		// truncate its contents
-		truncate_cluster_chain(p, f->first_cluster, 0);
+		truncate_cluster_chain(vfat, f->first_cluster, 0);
 		f->first_cluster = 0;
-		first_cluster_to_disk(p, f);
+		first_cluster_to_disk(vfat, f);
 	}
 
 	char buffer[READ_WRITE_BUFFER_SIZE];
@@ -157,7 +179,7 @@ cmd_write (part_info *p, char* path)
 	
 	while (bytes_read)
 	{	
-		unsigned int bytes_written = write_file(p, f, buffer, bytes_read, total_bytes_written);
+		unsigned int bytes_written = write_file(vfat, f, buffer, bytes_read, total_bytes_written);
 		total_bytes_written += bytes_read;
 
 		//printf("writing %d bytes at %d\n", bytes_read, total_bytes_read);
@@ -173,14 +195,23 @@ cmd_write (part_info *p, char* path)
 	
 	printf("setting file size: %d\n", total_bytes_written);
 	f->size_bytes = total_bytes_written;
-	file_size_to_disk(p, f);
+	file_size_to_disk(vfat, f);
 }
 
 int
-cmd_mv (part_info *p, char* src_path, char* dst_path)
+cmd_mv (part_info *vfat, int argc, char *argv[])
 {
+	if (argc < 2)
+	{
+		printf("mv: error, src and/or dst not given\n");
+		return 0;
+	}	
+	
+	char * src_path = argv[0];
+	char * dst_path = argv[1];
+	
 	printf("moving %s => %s\n", src_path, dst_path);
-	f_entry *f = fentry_from_path(p, dst_path);
+	f_entry *f = fentry_from_path(vfat, dst_path);
 	if (f)
 	{
 		printf("destination: %s, arlready exists\n", dst_path);
@@ -188,7 +219,7 @@ cmd_mv (part_info *p, char* src_path, char* dst_path)
 		return 0;
 	}
 	
-	f = fentry_from_path(p, src_path);
+	f = fentry_from_path(vfat, src_path);
 	if (!f)
 	{
 		printf("source: %s, does not exist\n", src_path);
@@ -199,7 +230,7 @@ cmd_mv (part_info *p, char* src_path, char* dst_path)
 	char* last_slash = strrchr(dst_path, '/');
 	char* dst_name = strdup((last_slash ? last_slash+1 : dst_path));
 	last_slash[0] = 0; /* terminate path at last slash */
-	f_entry *d = fentry_from_path(p, dst_path);	
+	f_entry *d = fentry_from_path(vfat, dst_path);	
 
 	strcpy(f->lfn, dst_name);
 	f->name[0] = 0;
@@ -208,34 +239,55 @@ cmd_mv (part_info *p, char* src_path, char* dst_path)
 	
 	//TODO: cmd_mv: will this work for moving a DIRECTORY? - think so?
 	
-	dir_rem_entry(p, f);
-	dir_add_entry(p, d, f);
+	dir_rem_entry(vfat, f);
+	dir_add_entry(vfat, d, f);
 	
 	free(dst_name);
 	return 0;
 }
 
 int
-cmd_mkfile (part_info *p, char* file_path)
+cmd_mkfile (part_info *vfat, int argc, char *argv[])
 {
+	if (argc < 1)
+	{
+		printf("touch: error, no path given\n");
+		return 0;
+	}
+	
+	char * file_path = argv[0];
 	printf("creating file '%s'\n", file_path);
-	return entry_create(p, file_path, 0x0);
+	return entry_create(vfat, file_path, 0x0);
 }
 
 int
-cmd_mkdir (part_info *p, char* dir_path)
+cmd_mkdir (part_info *vfat, int argc, char *argv[])
 {
+	if (argc < 1)
+	{
+		printf("mkdir: error, no directory given\n");
+		return 0;
+	}
+	
+	char * dir_path = argv[0];
 	printf("creating directory '%s'\n", dir_path);
 	//TODO: create '.' and '..' directories in new directory
 	//		'.'->first_cluster = cluster of new directory
 	//		'..'->first_cluster = 0 (always? - test for 3rd level directory)
-	return entry_create(p, dir_path, 0x10); //0x10 = subdir
+	return entry_create(vfat, dir_path, 0x10); //0x10 = subdir
 }
 
 void
-cmd_rmdir (part_info *p, char *path)
+cmd_rmdir (part_info *vfat, int argc, char *argv[])
 {
-	f_entry *d = fentry_from_path(p, path);
+	if (argc < 1)
+	{
+		printf("rmdir: error, no directory given\n");
+		return;
+	}
+	
+	char * path = argv[0];
+	f_entry *d = fentry_from_path(vfat, path);
 	if (!d)
 	{
 		printf("Directory %s not found.\n", path);
@@ -254,22 +306,30 @@ cmd_rmdir (part_info *p, char *path)
 	f_entry entries[1];
 	
 	int i=0;
-	while (read_dir(p, path, entries, 1, i++)) /* try to read an entry from d */
+	while (read_dir(vfat, path, entries, 1, i++)) /* try to read an entry from d */
 	{
-		if (strcmp(entries[0].name, ".")!=0 && strcmp(entries[0].name, "..")!=0)
+		if (strcmp(entries[0].name, ".") !=0 && strcmp(entries[0].name, "..") != 0)
 		{
 			printf("Directory not empty: %s\n", path);
 			return;			
 		}
 	}
 	
-	file_rem(p, path);
+	file_rem(vfat, path);
 }
 
 void
-cmd_rmfile (part_info *p, char *path)
+cmd_rmfile (part_info *vfat, int argc, char *argv[])
 {
-	f_entry *f = fentry_from_path(p, path);
+	if (argc < 1)
+	{
+		printf("rm: error, no path given\n");
+		return;
+	}
+	
+	char * path = argv[0];
+	
+	f_entry *f = fentry_from_path(vfat, path);
 	if (!f)
 	{
 		printf("%s does not exist.\n", path);
@@ -277,10 +337,10 @@ cmd_rmfile (part_info *p, char *path)
 	}
 	if (f->attr_d)
 	{
-		cmd_rmdir(p, path);
+		cmd_rmdir(vfat, 1, argv);
 		return;
 	}
-	file_rem(p, path);
+	file_rem(vfat, path);
 }
 
 /*
@@ -290,12 +350,20 @@ cmd_rmfile (part_info *p, char *path)
  */
 
 void
-cmd_readcluster (part_info *p, char* strcluster)
+cmd_readcluster (part_info *vfat, int argc, char *argv[])
 {
-	char buffer[p->bytes_per_cluster];
-	read_cluster(p, buffer, strtol(strcluster,0,0));
+	if (argc < 1)
+	{
+		printf("readcluster: error, no cluster given\n");
+		return;
+	}
+	
+	char * strcluster = argv[0];
+	
+	char buffer[vfat->bytes_per_cluster];
+	read_cluster(vfat, buffer, strtol(strcluster,0,0));
 	int i, j=0;
-	for (i=0;i<p->bytes_per_cluster;i++)
+	for (i=0;i<vfat->bytes_per_cluster;i++)
 	{
 		printf("%02x ", (unsigned char)buffer[i]);
 		if (j++>30) {printf("\n");j=0;}
@@ -304,8 +372,50 @@ cmd_readcluster (part_info *p, char* strcluster)
 }
 
 void
-cmd_printclusterchain (part_info *p, char* strcluster)
+cmd_findchainwithcluster (part_info *vfat, int argc, char *argv[])
 {
+	if (argc < 1)
+	{
+		printf("findchainwithcluster: error, no cluster given\n");
+		return;
+	}
+
+	char * strcluster = argv[0];
+
+	unsigned int search_cluster = strtol(strcluster, 0, 0);
+	unsigned int cluster = 0;
+
+	int found;
+	do {
+		found = 0;
+		for (cluster = 2; cluster < vfat->num_data_clusters; cluster++)
+		{
+			unsigned int next_cluster = read_fat(vfat, cluster);
+			if (next_cluster == search_cluster)
+			{
+				found = 1;
+				search_cluster = cluster;
+				break;
+//				printf("invalid cluster chain, cluster#: %#x found.\n", cluster);
+//				break;
+			}
+		}		
+	} while (found);
+	printf("%#x\n", search_cluster);
+}
+
+
+void
+cmd_printclusterchain (part_info *vfat, int argc, char *argv[])
+{
+	if (argc < 1)
+	{
+		printf("printclusterchain: error, no cluster given\n");
+		return;
+	}
+	
+	char * strcluster = argv[0];
+	
 	unsigned int cluster = strtol(strcluster, 0, 0);
 	for(;;)
 	{
@@ -316,21 +426,36 @@ cmd_printclusterchain (part_info *p, char* strcluster)
 			printf("invalid cluster chain, cluster#: %#x found.\n", cluster);
 			break;
 		}
-		cluster = read_fat(p, cluster);
+		cluster = read_fat(vfat, cluster);
 	}
 	printf("\n");
 }
 
 void
-cmd_readfat (part_info *p, char* strcluster)
+cmd_readfat (part_info *vfat, int argc, char *argv[])
 {
-	printf("%#x\n", read_fat(p, strtol(strcluster,0,0)));
+	if (argc < 1)
+	{
+		printf("readfat: error, no cluster given\n");
+		return;
+	}
+
+	char * strcluster = argv[0];
+	printf("%#x\n", read_fat(vfat, strtol(strcluster,0,0)));
 }
 
 void
-cmd_dumpdir (part_info *p, char* path)
+cmd_dumpdir (part_info *vfat, int argc, char *argv[])
 {
-	f_entry *f = fentry_from_path(p, path);
+	if (argc < 1)
+	{
+		printf("dumpdir: error, no path given\n");
+		return;
+	}
+	
+	char * path = argv[0];
+	
+	f_entry *f = fentry_from_path(vfat, path);
 	
 	if (!f)
 	{
@@ -352,7 +477,7 @@ cmd_dumpdir (part_info *p, char* path)
 	do
 	{
 		char entry[FILE_ENTRY_SIZE];
-		bytes_read = read_cluster_chain(p, f->first_cluster, entry, FILE_ENTRY_SIZE, total_read);
+		bytes_read = read_cluster_chain(vfat, f->first_cluster, entry, FILE_ENTRY_SIZE, total_read);
 		total_read += bytes_read;
 		
 		if (!entry[0]) break;
@@ -381,32 +506,32 @@ cmd_dumpdir (part_info *p, char* path)
 }
 
 void
-cmd_info (part_info *p)
+cmd_info (part_info *vfat, int argc, char *argv[])
 {
-	printf("OEM String: %s\n", p->oem);
+	printf("OEM String: %s\n", vfat->oem);
 
 //	printf("Bytes/Sector: %#x\n", p.bytes_per_sector);
-	printf("Sectors/Cluster: %#x\n", p->sectors_per_cluster);
-	printf("Reserved Sectors: %#x\n", p->reserved_sectors);
-	printf("Num FAT's: %#x\n", p->num_fats);
-//	printf("Max root entries: %#x\n", p->max_root_entries);
-	printf("Total Sectors: %#x\n", p->total_sectors);
-//	printf("Media: %#x\n", p->media);
-	printf("Sectors/Fat: %#x\n", p->sectors_per_fat);
-	printf("Root Cluster #: %#x\n", p->root_first_cluster);
+	printf("Sectors/Cluster: %#x\n", vfat->sectors_per_cluster);
+	printf("Reserved Sectors: %#x\n", vfat->reserved_sectors);
+	printf("Num FAT's: %#x\n", vfat->num_fats);
+//	printf("Max root entries: %#x\n", vfat->max_root_entries);
+	printf("Total Sectors: %#x\n", vfat->total_sectors);
+//	printf("Media: %#x\n", vfat->media);
+	printf("Sectors/Fat: %#x\n", vfat->sectors_per_fat);
+	printf("Root Cluster #: %#x\n", vfat->root_first_cluster);
 //	printf("FS Info Sector #: %#x\n", p.fs_info_sector);
-	printf("Volume Label: %s\n", p->label);
-	printf("Free Clusters: %#x\n", p->free_clusters);
+	printf("Volume Label: %s\n", vfat->label);
+	printf("Free Clusters: %#x\n", vfat->free_clusters);
 	printf("Partition Size: ");
-	print_human_size((float)p->total_sectors * p->bytes_per_sector);
+	print_human_size((float)vfat->total_sectors * vfat->bytes_per_sector);
 	printf(" -");
-	print_human_size(p->reserved_sectors+(p->num_fats*p->sectors_per_fat)*p->bytes_per_sector);
+	print_human_size(vfat->reserved_sectors+(vfat->num_fats*vfat->sectors_per_fat)*vfat->bytes_per_sector);
 	printf(" for filesystem\n");
-	printf("%.2f%% full\n", 100.0 - 100.0 * (float)p->free_clusters * (float)p->sectors_per_cluster / (float)p->num_data_clusters);
+	printf("%.2f%% full\n", 100.0 - 100.0 * (float)vfat->free_clusters * (float)vfat->sectors_per_cluster / (float)vfat->num_data_clusters);
 }
 
 void
-cmd_todo ()
+cmd_todo (part_info *vfat, int argc, char *argv[])
 {
 	printf("commands:\n");
 	printf("\tread\t[/path/to/file]\t- write contents of file to stdout\n");
@@ -427,62 +552,117 @@ cmd_todo ()
 	printf("\t\t- encode f_entry's timestamps\n");
 	puts("");
 	printf("\t- cache - what kind of scheme to use?\n");
-	printf("\t- cli - better parameters\n");
-	printf("\t\t ./vfat -f Win98.img -s 0x3f [cmd] \n");
+//	printf("\t- cli - better parameters\n");
+//	printf("\t\t ./vfat -f Win98.img -s 0x3f [cmd] \n");
 }
 
 int
 main (int argc, char *argv[]) {	
-	FILE* f = fopen(argv[1], "r");
+	char *path = 0;
+	unsigned int lba = 0x0;
+	char **sub_argv = 0;
+	int num_sub_args = 0;
+	
+	enum param {
+		PARAM_NONE = 0,
+		PARAM_LBA_OFFSET = 1,
+		PARAM_IMAGE_PATH = 2,
+		PARAM_CMD_ARG = 3
+	} next_param;
+	
+	next_param = PARAM_NONE;
+	
+	int i;
+	for (i=1;i<argc;i++)
+	{
+		switch (next_param)
+		{
+			case PARAM_NONE:
+				if (strcmp(argv[i], "-o") == 0)
+				{
+					next_param = PARAM_LBA_OFFSET;
+				} else if (strcmp(argv[i], "-f") == 0) {
+					next_param = PARAM_IMAGE_PATH;					
+				} else {
+					next_param = PARAM_CMD_ARG;
+					sub_argv = malloc(sizeof(char*)*(argc-i));					
+					i--;
+				}
+				break;
+			case PARAM_LBA_OFFSET:
+				lba = strtol(argv[i], 0, 0);
+				next_param = PARAM_NONE;
+				break;
+			case PARAM_IMAGE_PATH:
+				path = argv[i];
+				next_param = PARAM_NONE;
+				break;
+			case PARAM_CMD_ARG:
+				sub_argv[num_sub_args++] = argv[i];
+				break;
+		}
+	}
+	
+	FILE* f = fopen(path, "r");
 	if (!f)
 	{
-		printf("fopen: failed opening %s\n", argv[1]);
+		printf("fopen: failed opening %s\n", path);
 		return 1;
 	}
 
-	unsigned int lba = strtol(argv[2],0,0);
-//	printf("using lba: %#x\n", lba);
-	part_info p;
-	p = vfat_mount(f, lba);
-	
-	char* cmd = argv[3];
-	if (strcmp(cmd, "read") == 0) {
-		cmd_read(&p, argv[4]);
-	} else if (strcmp(cmd, "write") == 0) {
-		cmd_write(&p, argv[4]);	
-	} else if (strcmp(cmd, "ls") == 0) {
-		cmd_ls(&p, argv[4]);
-	} else if (strcmp(cmd, "mv") == 0) {
-		cmd_mv(&p, argv[4], argv[5]);
-	} else if (strcmp(cmd, "touch") == 0) {
-		cmd_mkfile(&p, argv[4]);		
-	} else if (strcmp(cmd, "rm") == 0) {
-		cmd_rmfile(&p, argv[4]);		
-	} else if (strcmp(cmd, "mkdir") == 0) {
-		cmd_mkdir(&p, argv[4]);
-	} else if (strcmp(cmd, "rmdir") == 0) {
-		cmd_rmdir(&p, argv[4]);
-	} else if (strcmp(cmd, "dumpdir") == 0) {
-		cmd_dumpdir(&p, argv[4]);
-	} else if (strcmp(cmd, "readcluster") == 0) {
-		cmd_readcluster(&p, argv[4]);		
-	} else if (strcmp(cmd, "printclusterchain") == 0) {
-		cmd_printclusterchain(&p, argv[4]);		
-	} else if (strcmp(cmd, "readfat") == 0) {
-		cmd_readfat(&p, argv[4]);				
-	} else if (strcmp(cmd, "info") == 0) {
-		cmd_info(&p);
-	} else if (strcmp(cmd, "todo") == 0) {
-		cmd_todo();
-//	} else if (strcmp(cmd, "countnz") == 0) {
-//		count_unused_cluster_not_zerod(&p);
-//	} else if (strcmp(cmd, "zero") == 0) {
-//		printf("this function is broken.\n");//zero_unused_clusters(&p);
-	} else {
-		printf("unknown command: %s!\n", cmd);
-	}
+	part_info *vfat;
+	vfat = vfat_mount(f, lba);
 
-	vfat_umount(&p);
+	if (vfat)
+	{
+		if (num_sub_args)
+		{
+			if (strcmp(sub_argv[0], "read") == 0) {
+				cmd_read(vfat, num_sub_args-1, sub_argv+1);
+			} else if (strcmp(sub_argv[0], "write") == 0) {
+				cmd_write(vfat, num_sub_args-1, sub_argv+1);
+			} else if (strcmp(sub_argv[0], "ls") == 0) {
+				cmd_ls(vfat, num_sub_args-1, sub_argv+1);
+			} else if (strcmp(sub_argv[0], "mv") == 0) {
+				cmd_mv(vfat, num_sub_args-1, sub_argv+1);
+			} else if (strcmp(sub_argv[0], "touch") == 0) {
+				cmd_mkfile(vfat, num_sub_args-1, sub_argv+1);
+			} else if (strcmp(sub_argv[0], "rm") == 0) {
+				cmd_rmfile(vfat, num_sub_args-1, sub_argv+1);
+			} else if (strcmp(sub_argv[0], "mkdir") == 0) {
+				cmd_mkdir(vfat, num_sub_args-1, sub_argv+1);
+			} else if (strcmp(sub_argv[0], "rmdir") == 0) {
+				cmd_rmdir(vfat, num_sub_args-1, sub_argv+1);
+			} else if (strcmp(sub_argv[0], "dumpdir") == 0) {
+				cmd_dumpdir(vfat, num_sub_args-1, sub_argv+1);
+			} else if (strcmp(sub_argv[0], "readcluster") == 0) {
+				cmd_readcluster(vfat, num_sub_args-1, sub_argv+1);
+			} else if (strcmp(sub_argv[0], "printclusterchain") == 0) {
+				cmd_printclusterchain(vfat, num_sub_args-1, sub_argv+1);
+			} else if (strcmp(sub_argv[0], "findchainwithcluster") == 0) {
+				cmd_findchainwithcluster(vfat, num_sub_args-1, sub_argv+1);
+			} else if (strcmp(sub_argv[0], "readfat") == 0) {
+				cmd_readfat(vfat, num_sub_args-1, sub_argv+1);
+			} else if (strcmp(sub_argv[0], "info") == 0) {
+				cmd_info(vfat, num_sub_args-1, sub_argv+1);
+			} else if (strcmp(sub_argv[0], "todo") == 0) {
+				cmd_todo(vfat, num_sub_args-1, sub_argv+1);
+			//} else if (strcmp(sub_argv[0], "countnz") == 0) {
+			//	count_unused_cluster_not_zerod(vfat);
+		//	} else if (strcmp(cmd, "zero") == 0) {
+		//		printf("this function is broken.\n");//zero_unused_clusters(vfat);
+			} else {
+				printf("unknown command: %s!\n", sub_argv[0]);
+			}				
+		} else {
+			printf("no command given\n");
+		}
+
+		vfat_umount(vfat);		
+	}
+	
+	if (sub_argv) free(sub_argv);
+
 	fflush(f);
 	fclose(f);
 	

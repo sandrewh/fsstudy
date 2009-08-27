@@ -35,7 +35,7 @@ void zero_unused_clusters(part_info *p);
 void first_cluster_to_disk(part_info *p, f_entry *f);
 int write_file(part_info *p, f_entry *f, char* buffer, size_t size, off_t offset);
 
-part_info vfat_mount(FILE* f, unsigned int partition_start_sector);
+part_info* vfat_mount(FILE* f, unsigned int partition_start_sector);
 void vfat_umount(part_info *p);
 
 #endif

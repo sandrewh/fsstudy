@@ -10,7 +10,8 @@
  *
  */
 
-f_entry* fentry_from_path(part_info *p, char *path)
+f_entry*
+fentry_from_path(part_info *p, char *path)
 {
 	path = strdup(path);
 	char *search_name = strtok(path, "/");
@@ -75,7 +76,8 @@ f_entry* fentry_from_path(part_info *p, char *path)
 	return parent;
 }
 
-f_entry* enumerate_dir(part_info* p, unsigned int dir_cluster, int callback(f_entry f, void *arg), void *arg)
+f_entry*
+enumerate_dir(part_info* p, unsigned int dir_cluster, int callback(f_entry f, void *arg), void *arg)
 {
 	unsigned int entry_num = 0;
 	char entry[FILE_ENTRY_SIZE];
@@ -155,7 +157,8 @@ f_entry* enumerate_dir(part_info* p, unsigned int dir_cluster, int callback(f_en
 	return 0;
 }
 
-int search_dir_callback(f_entry file, void *arg)
+int
+search_dir_callback(f_entry file, void *arg)
 {
 	char* search_name = (char*)arg;
 	char* match_name = 0;
@@ -170,12 +173,14 @@ int search_dir_callback(f_entry file, void *arg)
 	return 1;
 }
 
-f_entry* search_dir(part_info *p, unsigned int dir_cluster, char* search_name)
+f_entry*
+search_dir(part_info *p, unsigned int dir_cluster, char* search_name)
 {
 	return enumerate_dir(p, dir_cluster, search_dir_callback, (void*)search_name);
 }
 
-int read_file(part_info *p, f_entry *f, char* buffer, size_t size, off_t offset)
+int
+read_file(part_info *p, f_entry *f, char* buffer, size_t size, off_t offset)
 {	
 	/* does path exists? */
 	if (!f) return 0;
@@ -201,7 +206,8 @@ typedef struct {
 	f_entry *entries;
 } search_dir_data;
 
-int read_dir_callback(f_entry file, void *arg)
+int
+read_dir_callback(f_entry file, void *arg)
 {
 	search_dir_data *data = arg;
 	
@@ -213,7 +219,8 @@ int read_dir_callback(f_entry file, void *arg)
 	return 1; /* keep going */
 }
 
-unsigned int read_dir(part_info *p, char* path, f_entry *entries, size_t size, off_t offset)
+unsigned int
+read_dir(part_info *p, char* path, f_entry *entries, size_t size, off_t offset)
 {	
 	f_entry *f = fentry_from_path(p, path);
 	if (!f)
@@ -245,7 +252,8 @@ unsigned int read_dir(part_info *p, char* path, f_entry *entries, size_t size, o
 
 #if 0
 
-void count_unused_cluster_not_zerod(part_info *p)
+void
+count_unused_cluster_not_zerod(part_info *p)
 {
 	char* read = (char*)malloc(p->bytes_per_cluster);
 	char* zeros = (char*)malloc(p->bytes_per_cluster);
@@ -307,12 +315,14 @@ void zero_unused_clusters(part_info *p)
  *
  */
 
-void file_size_to_disk(part_info *p, f_entry *f)
+void
+file_size_to_disk(part_info *p, f_entry *f)
 {
 	write_cluster_chain(p, f->dir_first_cluster, (char*)&f->size_bytes, 4, (f->dir_slot_offset*FILE_ENTRY_SIZE)+0x1c);
 }
 
-void first_cluster_to_disk(part_info *p, f_entry *f)
+void
+first_cluster_to_disk(part_info *p, f_entry *f)
 {
 //	printf("first_cluster_to_disk: FILE_ENTRY_SIZE: %d, f->dir_slot_offset: %d\n", FILE_ENTRY_SIZE, f->dir_slot_offset);
 	
@@ -330,7 +340,8 @@ void first_cluster_to_disk(part_info *p, f_entry *f)
 	write_cluster_chain(p, f->dir_first_cluster, entry, FILE_ENTRY_SIZE, f->dir_slot_offset*FILE_ENTRY_SIZE);
 }
 
-int write_file(part_info *p, f_entry *f, char* buffer, size_t size, off_t offset)
+int
+write_file(part_info *p, f_entry *f, char* buffer, size_t size, off_t offset)
 {
 	/* if not clusters allocated for file (empty file) */
 	if (!f->first_cluster)
@@ -351,7 +362,8 @@ int write_file(part_info *p, f_entry *f, char* buffer, size_t size, off_t offset
 
 // should set 0x80 bit in index 0 of all LFN entry
 // should set entry[0]=0xe5 of 8.3 entry
-int dir_rem_entry(part_info *p, f_entry *f)
+int
+dir_rem_entry(part_info *p, f_entry *f)
 {
 //	printf("dir_rem_entry: f->name: %s, f->dir_first_cluster: %#x, f->dir_slot_offset: %d, f->dir_num_slots: %d\n", f->name, f->dir_first_cluster, f->dir_slot_offset, f->dir_num_slots);
 	
@@ -371,7 +383,8 @@ int dir_rem_entry(part_info *p, f_entry *f)
 	return 1;
 }
 
-int dir_add_entry(part_info *p, f_entry *d, f_entry* f)
+int
+dir_add_entry(part_info *p, f_entry *d, f_entry* f)
 {
 	unsigned int entry_num = 0;
 	char entry[FILE_ENTRY_SIZE];
@@ -511,7 +524,8 @@ int dir_add_entry(part_info *p, f_entry *d, f_entry* f)
 /* for files or dir's */
 // mark entire cluster chain as empty
 // remove entry from containing directory
-int file_rem(part_info *p, char *path)
+int
+file_rem(part_info *p, char *path)
 {
 	f_entry *f = fentry_from_path(p, path);
 	if (!f)
@@ -524,7 +538,8 @@ int file_rem(part_info *p, char *path)
 	return 1;
 }
 
-int entry_create(part_info *p, char *path, unsigned char attr)
+int
+entry_create(part_info *p, char *path, unsigned char attr)
 {
 	// does the entry already exist? 
 	f_entry *d = fentry_from_path(p, path);
@@ -586,53 +601,69 @@ int entry_create(part_info *p, char *path, unsigned char attr)
  *
  */
 
-part_info vfat_mount(FILE* f, unsigned int partition_start_sector)
+part_info*
+vfat_mount(FILE* f, unsigned int partition_start_sector)
 {
-	part_info p;
-	p.f = f;
-	p.bytes_per_sector = 0x200; /* for now ... */
-	p.first_sector = partition_start_sector;
+	part_info* p = malloc(sizeof(part_info));
+	p->f = f;
+	p->bytes_per_sector = 0x200; /* for now ... */
+	p->first_sector = partition_start_sector;
 
-	char buffer[p.bytes_per_sector];	
-	read_sector(&p, buffer, 0);
+	char * buffer = malloc(p->bytes_per_sector);
+//	char buffer[p->bytes_per_sector];
+	read_sector(p, buffer, 0);
 	
-	memcpy(&p.oem, buffer+3, 8);
-	p.oem[8] = 0;
-	memcpy(&p.label, buffer+0x47, 11);
-	p.label[11] = 0;
+	memcpy(&(p->oem), buffer+3, 8);
+	p->oem[8] = 0;
+	memcpy(&(p->label), buffer+0x47, 11);
+	p->label[11] = 0;
 
-	p.bytes_per_sector = *(unsigned short*)(buffer+0x0b);
-	p.sectors_per_cluster = (unsigned char)buffer[0x0d];
-	p.reserved_sectors = *(unsigned short*)(buffer+0x0e);
-	p.num_fats = (unsigned char)buffer[0x10];
-	p.max_root_entries = *(unsigned short*)(buffer+0x11);
-	p.total_sectors = *(unsigned short*)(buffer+0x13);
-	if (!p.total_sectors) p.total_sectors = *(unsigned int*)(buffer+0x20);
-	p.media = (unsigned char)buffer[0x15];
-	p.sectors_per_fat = *(unsigned int*)(buffer+0x24);
-	p.root_first_cluster = *(unsigned int*)(buffer+0x2c);
-	p.fs_info_sector = *(unsigned short*)(buffer+0x30);
-	p.bytes_per_cluster = p.sectors_per_cluster * p.bytes_per_sector;
+	p->bytes_per_sector = *(unsigned short*)(buffer+0x0b);
+	p->sectors_per_cluster = (unsigned char)buffer[0x0d];
+	p->reserved_sectors = *(unsigned short*)(buffer+0x0e);
+	p->num_fats = (unsigned char)buffer[0x10];
+	p->max_root_entries = *(unsigned short*)(buffer+0x11);
+	p->total_sectors = *(unsigned short*)(buffer+0x13);
+	if (!p->total_sectors) p->total_sectors = *(unsigned int*)(buffer+0x20);
+	p->media = (unsigned char)buffer[0x15];
+	p->sectors_per_fat = *(unsigned int*)(buffer+0x24);
+	p->root_first_cluster = *(unsigned int*)(buffer+0x2c);
+	p->fs_info_sector = *(unsigned short*)(buffer+0x30);
+	p->bytes_per_cluster = p->sectors_per_cluster * p->bytes_per_sector;
 
-	p.fat_first_sector = p.reserved_sectors;
-	p.clusters_first_sector = p.fat_first_sector + (p.num_fats * p.sectors_per_fat);
+	p->fat_first_sector = p->reserved_sectors;
+	p->clusters_first_sector = p->fat_first_sector + (p->num_fats * p->sectors_per_fat);
 	
-	read_sector(&p, buffer, p.fs_info_sector);
-	p.free_clusters_on_mount = *(unsigned int*)(buffer+0x1e8);
-	p.free_clusters = p.free_clusters_on_mount;
+	free(buffer);
+	if (p->root_first_cluster != 2)
+	{
+		free(p);
+		printf("vfat_mount: rout_first_cluster != 2\ndid you set the partition offset with -o?\n");
+		return NULL;
+	}
 	
-	p.num_data_clusters = p.total_sectors - p.reserved_sectors - (p.num_fats*p.sectors_per_fat);
-	p.last_allocated_cluster_on_mount = *(unsigned int*)(buffer+0x1ec);
-	p.last_allocated_cluster = p.last_allocated_cluster_on_mount;
+	/* use the new bytes_per_sector number */	
+	buffer = malloc(p->bytes_per_sector);
+	
+	read_sector(p, buffer, p->fs_info_sector);
+	p->free_clusters_on_mount = *(unsigned int*)(buffer+0x1e8);
+	p->free_clusters = p->free_clusters_on_mount;
+	
+	p->num_data_clusters = p->total_sectors - p->reserved_sectors - (p->num_fats*p->sectors_per_fat);
+	p->last_allocated_cluster_on_mount = *(unsigned int*)(buffer+0x1ec);
+	p->last_allocated_cluster = p->last_allocated_cluster_on_mount;
+	
+	free(buffer);
 	
 #if USE_CACHE
-	cache_init(&p);
+	cache_init(p);
 #endif
 	
 	return p;
 }
 
-void vfat_umount(part_info *p)
+void
+vfat_umount(part_info *p)
 {
 	if (p->free_clusters != p->free_clusters_on_mount)
 	{

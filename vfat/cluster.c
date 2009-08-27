@@ -83,7 +83,7 @@ find_free_cluster (part_info *p, unsigned int hint)
 	
 	/* search through fat until free cluster is found */
 	unsigned int i;
-	for (i=hint;i<p->num_data_clusters+2;i++)
+	for (i = hint; i < p->num_data_clusters+2; i++)
 	{
 		if (!read_fat(p, i)) return i;
 	}
