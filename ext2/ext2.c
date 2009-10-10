@@ -17,6 +17,8 @@ const char PATH_SEPARATOR[] = "/";
 const unsigned int PATH_SEPARATOR_LEN = 1;
 const unsigned int EXT2_VALID_FS = 1;
 
+#define WITH_CODE_BLOCKS 1
+
 // TODO: use same block enumerating mechanism (w/ callbacks?) for enumerate_dir and read_file?
 
 /*
@@ -25,7 +27,12 @@ const unsigned int EXT2_VALID_FS = 1;
  * if callback returns 0, enumeration ends
  */
 void
+
+#if WITH_CODE_BLOCKS
+enumerate_dir (ext2_info *ext2, inode *in, int (^callback)(directory_entry entry))
+#else
 enumerate_dir (ext2_info *ext2, inode *in, int callback(directory_entry entry, void *arg), void *arg)
+#endif
 {
 	// TODO: upper 32-bits of size in in->i_dir_acl
 	// TODO: handle indirect blocks
@@ -61,8 +68,11 @@ enumerate_dir (ext2_info *ext2, inode *in, int callback(directory_entry entry, v
 			entry.name = malloc(entry.name_len + 1);
 			strncpy(entry.name, cur_entry+8, entry.name_len); /* entry name is not 0-terminated */
 			entry.name[entry.name_len] = 0;
-			
+#if WITH_CODE_BLOCKS			
+			int ret = callback(entry);
+#else
 			int ret = callback(entry, arg);
+#endif
 			free(entry.name); entry.name = 0;
 			if (!ret) return;
 
@@ -75,6 +85,7 @@ enumerate_dir (ext2_info *ext2, inode *in, int callback(directory_entry entry, v
 	return;
 }
 
+#if !WITH_CODE_BLOCKS
 typedef struct {
 	char *search_name;		/* name to search for */
 	directory_entry *entry;	/* pointer to result (0 if not found) */
@@ -83,6 +94,7 @@ typedef struct {
 /*
  * find and return 1 matching directory entry for search_dir
  */
+
 int
 search_dir_callback (directory_entry entry, void *arg)
 {
@@ -99,6 +111,7 @@ search_dir_callback (directory_entry entry, void *arg)
 
 	return 1; /* continue enumerating */
 }
+#endif
 
 /*
  * find directory entry of directory /in/ with name == search_name
@@ -106,16 +119,34 @@ search_dir_callback (directory_entry entry, void *arg)
 directory_entry*
 search_dir (ext2_info *ext2, inode *in, char* search_name)
 {
-	search_dir_data data;
+#if WITH_CODE_BLOCKS
+	__block directory_entry *ret_entry = 0;
+	
+	enumerate_dir(ext2, in, ^ int (directory_entry entry) {
+		/* search name found? */
+		if (strcmp(entry.name, search_name) == 0)
+		{
+			entry.name = strdup(entry.name); /* keep our own copy of filename - caller should free this one */
+			ret_entry = malloc(sizeof(directory_entry)); /* create space to store the result */
+			*ret_entry = entry; /* copy result */
+			return 0; /* stop enumerating */
+		}
 
+		return 1; /* continue enumerating */
+	});
+
+	return ret_entry;
+#else
+	search_dir_data data;
 	data.search_name = search_name;	/* see def: search_dir_data for info */
-	data.entry = 0;	/* nothing found, yet */
+	data.entry = 0;			/* nothing found, yet */
 
 	enumerate_dir(ext2, in, search_dir_callback, (void*)&data);
-
 	return data.entry;
+#endif
 }
 
+#if !WITH_CODE_BLOCKS
 typedef struct {
 	unsigned entry_num;			/* # entries read total */
 	unsigned offset;			/* # entries to skip */
@@ -127,6 +158,7 @@ typedef struct {
 /*
  * copy certain span of directory entries into buffer for read_dir
  */
+
 int
 read_dir_callback (directory_entry entry, void *arg)
 {
@@ -140,13 +172,30 @@ read_dir_callback (directory_entry entry, void *arg)
 
 	return 1; /* keep going */
 }
+#endif
 
 /*
  * copy certain span of directory entries into /entries/ for caller
  */
 unsigned int
 read_dir (ext2_info *ext2, inode *in, directory_entry *entries, size_t size, off_t offset)
-{	
+{
+#if WITH_CODE_BLOCKS
+	__block unsigned entry_num = 0;		/* # entries read total */
+	__block unsigned int num_read = 0;			/* # entries copied total */
+	
+	enumerate_dir(ext2, in, ^ int (directory_entry entry) {
+		if (entry_num++ < offset) return 1; /* keep going */
+		if (num_read >= size) return 0; /* stop */
+
+		entry.name = strdup(entry.name); /* keep our own copy of filename - caller should free this one */
+		entries[num_read++] = entry;
+
+		return 1; /* keep going */		
+	});
+
+	return num_read;
+#else
 	read_dir_data data;
 
 	data.entry_num = 0;		/* see def: read_dir_data for info */
@@ -158,6 +207,7 @@ read_dir (ext2_info *ext2, inode *in, directory_entry *entries, size_t size, off
 	enumerate_dir(ext2, in, read_dir_callback, (void*)&data);
 
 	return data.num_read;
+#endif
 }
 
 /* OPT: path_to_entry: make this recursive? */

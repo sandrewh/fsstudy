@@ -11,3 +11,4 @@ clean :
 	make -i -C ext2/ clean
 	make -i -C vfat/ clean
 	make -i -C ntfs/ clean
+	make -i -C util/ clean
