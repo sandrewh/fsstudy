@@ -28,7 +28,10 @@ print_human_size (float size)
 	else if ((size/=1024.0) < 1024.0) a = 'G';
 	else size/=1024.0;
 
-	printf("%6.1f%c", size, a);
+	if (a == 'B')
+		printf("%6.0f%c", size, a);
+	else
+		printf("%6.1f%c", size, a);
 }
 
 void
@@ -110,9 +113,16 @@ cmd_ls (part_info *vfat, int argc, char *argv[])
 			print_human_size(entries[i].size_bytes);
 			
 			if (entries[i].created.mon)
-				printf(" %02d-%02d-%04d %02d:%02d ", entries[i].created.mon, entries[i].created.d, entries[i].created.y, entries[i].created.h, entries[i].created.min);
-			else
+			{
+				printf(" %02d-%02d-%04d %02d:%02d ",
+					entries[i].created.mon,
+					entries[i].created.d,
+					entries[i].created.y,
+					entries[i].created.h,
+					entries[i].created.min);
+			} else {
 				printf(" -                ");
+			}
 			
 			printf("%6x ", entries[i].first_cluster);
 
