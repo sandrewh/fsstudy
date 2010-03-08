@@ -613,6 +613,12 @@ main (int argc, char *argv[]) {
 		}
 	}
 	
+	if (!path)
+	{
+		printf("must specify device/image path\ntry: %s -f /path/to/img todo\n", argv[0]);
+		return 1;
+	}
+	
 	FILE* f = fopen(path, "r");
 	if (!f)
 	{
@@ -655,7 +661,7 @@ main (int argc, char *argv[]) {
 				cmd_readfat(vfat, num_sub_args-1, sub_argv+1);
 			} else if (strcmp(sub_argv[0], "info") == 0) {
 				cmd_info(vfat, num_sub_args-1, sub_argv+1);
-			} else if (strcmp(sub_argv[0], "todo") == 0) {
+			} else if (strcmp(sub_argv[0], "help") == 0 || strcmp(sub_argv[0], "todo") == 0) {
 				cmd_todo(vfat, num_sub_args-1, sub_argv+1);
 			//} else if (strcmp(sub_argv[0], "countnz") == 0) {
 			//	count_unused_cluster_not_zerod(vfat);
