@@ -508,7 +508,7 @@ cmd_dumpdir (part_info *vfat, int argc, char *argv[])
 			printf("%02x ", (unsigned char)entry[i]);
 		}
 		printf("\n");
-		printf("\n");
+		// printf("\n");
 		slot++;
 	} while (bytes_read);
 	
