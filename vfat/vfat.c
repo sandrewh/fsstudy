@@ -77,19 +77,19 @@ fentry_from_path(part_info *p, char *path)
 }
 
 f_entry*
-enumerate_dir(part_info* p, unsigned int dir_cluster, int callback(f_entry f, void *arg), void *arg)
+enumerate_dir(part_info* p, uint32_t dir_cluster, int callback(f_entry f, void *arg), void *arg)
 {
 	unsigned int entry_num = 0;
 	char entry[FILE_ENTRY_SIZE];
 	f_entry file;
 	file.lfn[0] = 0;
 	file.dir_num_slots = 0;
-	unsigned char last_lfn_checksum = 0;
+	uint8_t last_lfn_checksum = 0;
 	
-	while (read_cluster_chain(p, dir_cluster, entry, FILE_ENTRY_SIZE, entry_num++*FILE_ENTRY_SIZE))
+	while (read_cluster_chain(p, dir_cluster, entry, FILE_ENTRY_SIZE, entry_num++ * FILE_ENTRY_SIZE))
 	{
 		if (!entry[0]) break; /* end of listing */
-		if ((unsigned char)entry[0] == 0xe5)
+		if ((uint8_t)entry[0] == 0xe5)
 		{
 			file.lfn[0] = 0;
 			file.dir_num_slots = 0;			
@@ -122,7 +122,7 @@ enumerate_dir(part_info* p, unsigned int dir_cluster, int callback(f_entry f, vo
 			continue;
 		}
 		
-		unsigned short cluster_high, cluster_low;
+		uint16_t cluster_high, cluster_low;
 		cluster_high = *(unsigned short*)(entry+0x14);
 		cluster_low = *(unsigned short*)(entry+0x1a);
 		file.size_bytes = *(unsigned int*)(entry+0x1c);
@@ -174,7 +174,7 @@ search_dir_callback(f_entry file, void *arg)
 }
 
 f_entry*
-search_dir(part_info *p, unsigned int dir_cluster, char* search_name)
+search_dir(part_info *p, uint32_t dir_cluster, char* search_name)
 {
 	return enumerate_dir(p, dir_cluster, search_dir_callback, (void*)search_name);
 }
@@ -199,10 +199,10 @@ read_file(part_info *p, f_entry *f, char* buffer, size_t size, off_t offset)
 }
 
 typedef struct {
-	unsigned entry_num;
-	unsigned offset;
-	unsigned size;
-	unsigned int num_read;
+	uint32_t entry_num;
+	off_t offset;
+	size_t size;
+	uint32_t num_read;
 	f_entry *entries;
 } search_dir_data;
 
@@ -347,7 +347,7 @@ write_file(part_info *p, f_entry *f, char* buffer, size_t size, off_t offset)
 	if (!f->first_cluster)
 	{
 		/* allocate a cluster */
-		unsigned int new_cluster = allocate_new_cluster(p, 0);
+		uint32_t new_cluster = allocate_new_cluster(p, 0);
 		if (!new_cluster) return 0;
 
 //		printf("write_file: first_cluster empty, allocated new one: %#x\n", new_cluster);
@@ -372,7 +372,7 @@ dir_rem_entry(part_info *p, f_entry *f)
 	write_cluster_chain(p, f->dir_first_cluster, &deleted, 1, (f->dir_slot_offset*FILE_ENTRY_SIZE)+0x00);
 
 	/* handle LFN entries */
-	unsigned int slot; /* tested when num_slots = 2 */
+	uint32_t slot; /* tested when num_slots = 2 */
 	for (slot = f->dir_slot_offset - (f->dir_num_slots - 1); slot < (f->dir_slot_offset); slot++)
 	{
 		read_cluster_chain(p, f->dir_first_cluster, &deleted, 1, (slot*FILE_ENTRY_SIZE)+0x00);
@@ -390,8 +390,8 @@ dir_add_entry(part_info *p, f_entry *d, f_entry* f)
 	char entry[FILE_ENTRY_SIZE];
 	f_entry file;
 	file.lfn[0] = 0;
-	unsigned int consecutive_unused = 0;
-	unsigned int slots_required = ceil((float)(strlen(f->lfn))/13.0)+1; /* 13 chars / slot */
+	uint32_t consecutive_unused = 0;
+	uint32_t slots_required = ceil((float)(strlen(f->lfn))/13.0)+1; /* 13 chars / slot */
 	
 //	printf("adding lfn:%s; name:%s, slots:%d\n", f->lfn, f->name, slots_required);
 	
@@ -449,14 +449,14 @@ dir_add_entry(part_info *p, f_entry *d, f_entry* f)
 	
 	fentry_convert_name_to_8_3(f);
 	
-	unsigned char name_checksum = lfn_checksum((unsigned char*)f->name);
+	uint8_t name_checksum = lfn_checksum((unsigned char*)f->name);
 
 	// the LFN entries
 	int slot;
 	for (slot=0;slot<slots_required-1;slot++)
 	{
 		memset(entry, 0, FILE_ENTRY_SIZE);
-		unsigned int seq_num = slots_required-slot-1;
+		uint32_t seq_num = slots_required-slot-1;
 		if (!slot) seq_num |= 0x40;
 		entry[0] = seq_num;
 		entry[0x0b] = 0x0f;
@@ -670,7 +670,7 @@ vfat_umount(part_info *p)
 		// write p->free_clusters back to disk
 		char buffer[p->bytes_per_sector];
 		read_sector(p, buffer, p->fs_info_sector);
-		*(unsigned int*)(buffer+0x1e8) = p->free_clusters;
+		*(uint32_t*)(buffer+0x1e8) = p->free_clusters;
 		write_sector(p, buffer, p->fs_info_sector);
 	}
 	
@@ -679,7 +679,7 @@ vfat_umount(part_info *p)
 		// write p->free_clusters back to disk
 		char buffer[p->bytes_per_sector];
 		read_sector(p, buffer, p->fs_info_sector);
-		*(unsigned int*)(buffer+0x1ec) = p->last_allocated_cluster;
+		*(uint32_t*)(buffer+0x1ec) = p->last_allocated_cluster;
 		write_sector(p, buffer, p->fs_info_sector);
 	}
 	

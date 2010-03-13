@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <string.h>
-#include <stdint.h>
 
 #include "main.h"
 
@@ -373,7 +372,8 @@ cmd_readcluster (part_info *vfat, int argc, char *argv[])
 	
 	char buffer[vfat->bytes_per_cluster];
 	read_cluster(vfat, buffer, strtol(strcluster,0,0));
-	int i, j=0;
+	int i;
+	// int j=0;
 	for (i=0;i<vfat->bytes_per_cluster;i++)
 	{
 		// printf("%02x ", (unsigned char)buffer[i]);

@@ -7,7 +7,7 @@
 #include <stdlib.h> //exit
 
 void
-f_entry_set_attr (f_entry *file, unsigned char attr)
+f_entry_set_attr (f_entry *file, uint8_t attr)
 {
 	file->attr_r = (attr & 0x01);
 	file->attr_h = (attr & 0x02);
@@ -17,14 +17,14 @@ f_entry_set_attr (f_entry *file, unsigned char attr)
 	file->attr_a = (attr & 0x20);
 }
 
-unsigned char
+uint8_t
 f_entry_get_attr (f_entry *file)
 {
 	return file->attr_r | file->attr_h | file->attr_s | file->attr_v | file->attr_d | file->attr_a;
 }
 
 void
-datetime_decode (DateTime* dt, unsigned char d1, unsigned char d2, unsigned char t1, unsigned char t2)
+datetime_decode (DateTime* dt, uint8_t d1, uint8_t d2, uint8_t t1, uint8_t t2)
 {
 	dt->h = t2 >> 3;
 	dt->min = (t1 >> 5) | ((t2 & 0x07) << 3);
@@ -186,11 +186,11 @@ fentry_convert_name_to_8_3 (f_entry *f)
 }
 
 /* courtesy http://en.wikipedia.org/wiki/File_Allocation_Table */
-unsigned char
+uint8_t
 lfn_checksum (const unsigned char *pFcbName)
 {
 	int i;
-	unsigned char sum=0;
+	uint8_t sum=0;
  
 	for (i=11; i; i--)
 		sum = ((sum & 1) << 7) + (sum >> 1) + *pFcbName++;
