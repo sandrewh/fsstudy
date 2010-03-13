@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 
 #include "main.h"
 
@@ -375,8 +376,9 @@ cmd_readcluster (part_info *vfat, int argc, char *argv[])
 	int i, j=0;
 	for (i=0;i<vfat->bytes_per_cluster;i++)
 	{
-		printf("%02x ", (unsigned char)buffer[i]);
-		if (j++>30) {printf("\n");j=0;}
+		// printf("%02x ", (unsigned char)buffer[i]);
+		// if (j++>30) {printf("\n");j=0;}
+		printf("%c", buffer[i]);
 	}
 	printf("\n\n");
 }
@@ -455,6 +457,29 @@ cmd_readfat (part_info *vfat, int argc, char *argv[])
 }
 
 void
+print_dirty_entry(char * entry, int slot, int bytes_read)
+{
+	printf("%-4d: ", slot);
+
+	int i = 0;
+	if (entry[0x0b] != 0x0f)
+	{
+		for (i=0;i<11;i++)
+		{
+			printf("%2c ", entry[i]);
+		}
+	} else {
+		
+	}
+	
+	for (;i<bytes_read;i++)
+	{
+		printf("%02x ", (unsigned char)entry[i]);
+	}
+	printf("\n");	
+}
+
+void
 cmd_dumpdir (part_info *vfat, int argc, char *argv[])
 {
 	if (argc < 1)
@@ -492,27 +517,126 @@ cmd_dumpdir (part_info *vfat, int argc, char *argv[])
 		
 		if (!entry[0]) break;
 
-		printf("%-4d: ", slot);
-
-		int i = 0;
-		if (entry[0x0b] != 0x0f)
-		{
-			for (i=0;i<11;i++)
-			{
-				printf("%2c ", entry[i]);
-			}
-		}
-		
-		for (;i<bytes_read;i++)
-		{
-			printf("%02x ", (unsigned char)entry[i]);
-		}
-		printf("\n");
+		print_dirty_entry(entry, slot, bytes_read);
 		// printf("\n");
 		slot++;
 	} while (bytes_read);
 	
 	free(f);
+}
+
+void
+cmd_find_dir_entries (part_info *vfat, int argc, char *argv[])
+{
+	unsigned int entries_per_cluster = vfat->bytes_per_cluster / FILE_ENTRY_SIZE;
+	unsigned int num_dir_clusters = 0;
+	char * buffer = malloc(vfat->bytes_per_cluster);
+
+	unsigned int cluster = 0;	
+	for (cluster = 2; cluster < vfat->num_data_clusters; cluster++)
+	{
+		if (read_fat(vfat, cluster)) continue;
+		/* for each cluster */
+		read_cluster(vfat, buffer, cluster);
+
+		/* for each possible dir entry */
+		unsigned char * entry = (unsigned char *)buffer;
+		int non_blank = 0;
+		int i;
+		for (i = 0; i < entries_per_cluster; i++)
+		{
+			if (entry[0x0] == 0) continue;
+			non_blank++;
+			
+			if ((entry[0x0b] & 0x80) != 0)
+			{
+				break;
+			}
+
+			if (entry[0x0b] == 0x0f) /* lfn */
+			{
+				if (entry[0x0c] != 0x00 || entry[0x1a] != 0x00 || entry[0x1b] != 0x00)
+				{
+					break;
+				}
+			} else {
+				if ((entry[0x0e] >> 11) > 23) break; /* check creation time hours */
+				if ((entry[0x16] >> 11) > 23) break; /* check modified time hours */
+
+				if (entry[0x0d] > 199) break;
+				int skip_record = 0;
+				int c;
+				for (c=0; c < 0x0b; c++)
+				{
+					if (i==0 && c==0 && entry[c]=='.') continue;
+					if (i==1 && (c==0 || c==1) && entry[c]=='.') continue;
+					if (entry[c]>'a' && entry[c]<'z') skip_record = 1;
+					if (entry[c]<32) skip_record = 1;
+					if (entry[c]==127) skip_record = 1;
+					switch (entry[c])
+					{
+						case '"':
+						case '*':
+						case '/':
+						case ':':
+						case '<':
+						case '>':
+						case '?':
+						case '\\':
+						case '|':
+						case '+':
+						case ',':
+						case ';':
+						case '=':
+						case '[':
+						case ']':
+							skip_record = 1;
+							break;
+					}		
+					if (skip_record) break;			
+				}
+				if (skip_record) break;			
+			}
+			
+			entry += FILE_ENTRY_SIZE;
+		}
+
+		if (i >= entries_per_cluster && non_blank)
+		{
+			num_dir_clusters++;
+			printf("Cluster: 0x%x\n", cluster);
+			unsigned char * entry = (unsigned char *)buffer;
+			for (i = 0; i < entries_per_cluster; i++)
+			{
+				if (!entry[0]) break;
+				
+				uint32_t first_cluster = (*(uint16_t*)&entry[0x14] << 16) | *(uint16_t*)&entry[0x1a];
+				uint32_t file_size = *(uint32_t*)&entry[0x1c];
+				uint32_t file_clusters = file_size / vfat->bytes_per_cluster;
+				if (file_size % vfat->bytes_per_cluster) file_clusters++;
+				int c;
+				for (c=0;c<file_clusters;c++)
+				{
+					if (read_fat(vfat, first_cluster+c)) break;
+				}
+				
+				if (entry[0x0b] != 0x0f) /* not lfn */
+				{
+					printf("%x/%x\t", c, file_clusters);
+				} else {
+					printf("\t");
+				}
+				
+				print_dirty_entry((char*)entry, i, FILE_ENTRY_SIZE);
+
+				entry += FILE_ENTRY_SIZE;				
+			}			
+			puts("");
+		}
+		
+	}
+	
+	printf("Found %u clusters.\n", num_dir_clusters);
 }
 
 void
@@ -657,6 +781,8 @@ main (int argc, char *argv[]) {
 				cmd_printclusterchain(vfat, num_sub_args-1, sub_argv+1);
 			} else if (strcmp(sub_argv[0], "findchainwithcluster") == 0) {
 				cmd_findchainwithcluster(vfat, num_sub_args-1, sub_argv+1);
+			} else if (strcmp(sub_argv[0], "finddirentries") == 0) {
+				cmd_find_dir_entries(vfat, num_sub_args-1, sub_argv+1);				
 			} else if (strcmp(sub_argv[0], "readfat") == 0) {
 				cmd_readfat(vfat, num_sub_args-1, sub_argv+1);
 			} else if (strcmp(sub_argv[0], "info") == 0) {
