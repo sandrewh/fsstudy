@@ -13,7 +13,7 @@ ext2.o : ext2.c ext2.h
 block.o : block.c block.h
 inode.o : inode.c inode.h
 
-cache.o : cache.c cache.h
+cache.o : ../util/cache.c ../util/cache.h
 	make -C ../util/
 	
 hash.o : ../util/hash.c ../util/hash.h
