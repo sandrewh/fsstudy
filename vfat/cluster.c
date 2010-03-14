@@ -1,7 +1,7 @@
 #include <string.h>
 
 #include "cluster.h"
-#include "cache.h"
+#include "sector.h"
 
 /*
  *
@@ -16,8 +16,6 @@ read_cluster (part_info *p, char* buffer, uint32_t cluster)
 	for (sector_num=0; sector_num<p->sectors_per_cluster;sector_num++)
 		read_sector(p, buffer+(sector_num*p->bytes_per_sector), p->clusters_first_sector + (cluster - 2) * p->sectors_per_cluster + sector_num);
 }
-
-// TODO: load entire fat into memory? or just cache accesses?
 
 unsigned int
 read_cluster_chain (part_info *p, uint32_t first_cluster, char* buffer, size_t size, off_t offset)

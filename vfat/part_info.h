@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <stdint.h>
 
+#include "../util/cache.h"
+
 typedef struct {
 	unsigned char oem[9], label[12];
 	uint16_t bytes_per_sector;
@@ -28,7 +30,8 @@ typedef struct {
 	uint32_t last_allocated_cluster;
 	uint32_t last_allocated_cluster_on_mount;
 	
-	char * cache_fat;
+	char * fat_cache;
+	CACHE* sector_cache;
 	
 	FILE* f;
 } part_info;

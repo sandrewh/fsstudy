@@ -656,9 +656,8 @@ vfat_mount(FILE* f, unsigned int partition_start_sector)
 	
 	free(buffer);
 	
-#if USE_CACHE
-	cache_init(p);
-#endif
+	cache_load_fat(p);
+	p->sector_cache = cache_create(p->bytes_per_sector, p->total_sectors * 0.13);
 	
 	return p;
 }
@@ -684,7 +683,9 @@ vfat_umount(part_info *p)
 		write_sector(p, buffer, p->fs_info_sector);
 	}
 	
-#if USE_CACHE
-	cache_flush(p);
-#endif
+	print_raw_sector_reads();
+	
+	cache_flush_fat(p);
+	cache_info(p->sector_cache);
+	cache_destroy(p->sector_cache);	
 }

@@ -6,7 +6,7 @@
 #include "fentry.h"
 #include "part_info.h"
 #include "cluster.h"
-#include "cache.h"
+#include "sector.h"
 
 #define CREATE_FILE_ON_WRITE 1
 
