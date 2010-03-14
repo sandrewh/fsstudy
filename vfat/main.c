@@ -461,21 +461,35 @@ print_dirty_entry(char * entry, int slot, int bytes_read)
 {
 	printf("%-4d: ", slot);
 
-	int i = 0;
 	if (entry[0x0b] != 0x0f)
 	{
+		int i = 0;		
 		for (i=0;i<11;i++)
 		{
 			printf("%2c ", entry[i]);
 		}
-	} else {
 		
+		if (entry[0x0b] & 0x10) printf("[D] ");
+		else printf("    ");
+		
+		for (i=0xd;i<0x1a;i++)
+			if (i != 0x14)
+				printf("%02x ", (unsigned char)entry[i]);
+				
+		uint32_t first_cluster = (*(uint16_t*)&entry[0x14] << 16) | *(uint16_t*)&entry[0x1a];
+		uint32_t file_size = *(uint32_t*)&entry[0x1c];
+		printf(" {cluster: 0x%x, size: 0x%x}", first_cluster, file_size);
+				
+	} else {
+		int i;
+		for (i=1;i<0xb;i+=2)
+			if (entry[i] != -1) printf("%c", entry[i]);
+		for (i=0x0e;i<0x1a;i+=2)
+			if (entry[i] != -1) printf("%c", entry[i]);
+		for (i=0x1c;i<0x20;i+=2)
+			if (entry[i] != -1) printf("%c", entry[i]);
 	}
 	
-	for (;i<bytes_read;i++)
-	{
-		printf("%02x ", (unsigned char)entry[i]);
-	}
 	printf("\n");	
 }
 
