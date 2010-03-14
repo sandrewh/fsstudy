@@ -633,7 +633,6 @@ cmd_find_dir_entries (part_info *vfat, int argc, char *argv[])
 			}			
 			puts("");
 		}
-		
 	}
 	
 	printf("Found %u clusters.\n", num_dir_clusters);
@@ -671,7 +670,7 @@ cmd_info (part_info *vfat, int argc, char *argv[])
 {
 	printf("OEM String: %s\n", vfat->oem);
 
-//	printf("Bytes/Sector: %#x\n", p.bytes_per_sector);
+	printf("Bytes/Sector: %#x\n", vfat->bytes_per_sector);
 	printf("Sectors/Cluster: %#x\n", vfat->sectors_per_cluster);
 	printf("Reserved Sectors: %#x\n", vfat->reserved_sectors);
 	printf("Num FAT's: %#x\n", vfat->num_fats);
@@ -680,7 +679,7 @@ cmd_info (part_info *vfat, int argc, char *argv[])
 //	printf("Media: %#x\n", vfat->media);
 	printf("Sectors/Fat: %#x\n", vfat->sectors_per_fat);
 	printf("Root Cluster #: %#x\n", vfat->root_first_cluster);
-//	printf("FS Info Sector #: %#x\n", p.fs_info_sector);
+//	printf("FS Info Sector #: %#x\n", vfat->fs_info_sector);
 	printf("Volume Label: %s\n", vfat->label);
 	printf("Free Clusters: %#x\n", vfat->free_clusters);
 	printf("Partition Size: ");
@@ -688,7 +687,7 @@ cmd_info (part_info *vfat, int argc, char *argv[])
 	printf(" -");
 	print_human_size(vfat->reserved_sectors+(vfat->num_fats*vfat->sectors_per_fat)*vfat->bytes_per_sector);
 	printf(" for filesystem\n");
-	printf("%.2f%% full\n", 100.0 - 100.0 * (float)vfat->free_clusters * (float)vfat->sectors_per_cluster / (float)vfat->num_data_clusters);
+	printf("%.2f%% full\n", 100.0 * (float)(vfat->num_data_clusters - vfat->free_clusters) / (float)vfat->num_data_clusters);
 }
 
 void

@@ -650,7 +650,7 @@ vfat_mount(FILE* f, unsigned int partition_start_sector)
 	p->free_clusters_on_mount = *(unsigned int*)(buffer+0x1e8);
 	p->free_clusters = p->free_clusters_on_mount;
 	
-	p->num_data_clusters = p->total_sectors - p->reserved_sectors - (p->num_fats*p->sectors_per_fat);
+	p->num_data_clusters = (p->total_sectors - p->reserved_sectors - (p->num_fats*p->sectors_per_fat)) / p->sectors_per_cluster;
 	p->last_allocated_cluster_on_mount = *(unsigned int*)(buffer+0x1ec);
 	p->last_allocated_cluster = p->last_allocated_cluster_on_mount;
 	
