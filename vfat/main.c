@@ -640,6 +640,33 @@ cmd_find_dir_entries (part_info *vfat, int argc, char *argv[])
 }
 
 void
+cmd_readbytesfromcluster (part_info *vfat, int argc, char *argv[])
+{
+	unsigned int cluster_num = strtol(argv[0], 0, 0);
+	int bytes = strtol(argv[1], 0, 0);
+	
+	char buffer[vfat->bytes_per_cluster];
+	
+	while (bytes > 0)
+	{
+		read_cluster(vfat, buffer, cluster_num++);
+		bytes -= vfat->bytes_per_cluster;
+		int read = vfat->bytes_per_cluster;
+		if (bytes < 0)  read += bytes;
+
+		int i;
+		// int j=0;
+		for (i=0; i<read; i++)
+		{
+			// printf("%02x ", (unsigned char)buffer[i]);
+			// if (j++>30) {printf("\n");j=0;}
+			printf("%c", buffer[i]);
+		}
+		// printf("\n\n");
+	}
+}
+
+void
 cmd_info (part_info *vfat, int argc, char *argv[])
 {
 	printf("OEM String: %s\n", vfat->oem);
@@ -783,6 +810,8 @@ main (int argc, char *argv[]) {
 				cmd_findchainwithcluster(vfat, num_sub_args-1, sub_argv+1);
 			} else if (strcmp(sub_argv[0], "finddirentries") == 0) {
 				cmd_find_dir_entries(vfat, num_sub_args-1, sub_argv+1);				
+			} else if (strcmp(sub_argv[0], "readbytesfromcluster") == 0) {
+				cmd_readbytesfromcluster(vfat, num_sub_args-1, sub_argv+1);				
 			} else if (strcmp(sub_argv[0], "readfat") == 0) {
 				cmd_readfat(vfat, num_sub_args-1, sub_argv+1);
 			} else if (strcmp(sub_argv[0], "info") == 0) {
