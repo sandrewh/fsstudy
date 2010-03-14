@@ -92,12 +92,14 @@ void hash_set(HASH* hash, uint32_t key, VALUE_TYPE value) {
 	HASH_ITEM* new_item = (HASH_ITEM*)malloc(sizeof(HASH_ITEM));
 	new_item->key = key;
 	new_item->value = value;
+	new_item->prev = (HASH_ITEM*)0;	
 	new_item->next = (HASH_ITEM*)0;
 
 	/* add the item to the hash */
 	if (item) {
 		/* item points to last item in linked-list */
 		item->next = new_item;
+		new_item->prev = item;
 	} else {
 		int index = hash_key_to_index(hash, key);	
 		hash->items[index] = new_item;
@@ -151,6 +153,14 @@ HASH_ITEM* hash_get(HASH* hash, uint32_t key) {
 	}
 	
 	return item;
+}
+
+void hash_delete(HASH* hash, uint32_t key) {
+	HASH_ITEM* item = hash_get(hash, key);
+	if (!item) return;
+	item->prev->next = item->next;
+	item->next->prev = item->prev;
+	free(item);
 }
 
 /* dumps the contents of the table to STDOUT */

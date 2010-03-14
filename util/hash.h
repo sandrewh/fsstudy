@@ -10,6 +10,7 @@
 struct HASH_ITEM {
 	uint32_t key;
 	VALUE_TYPE value;
+	struct HASH_ITEM* prev;
 	struct HASH_ITEM* next;
 };
 
@@ -30,5 +31,6 @@ void hash_set(HASH* hash, uint32_t key, VALUE_TYPE value);
 void hash_destroy(HASH* hash);
 HASH_ITEM* hash_get_close(HASH* hash, uint32_t key);
 HASH_ITEM* hash_get(HASH* hash, uint32_t key);
+void hash_delete(HASH* hash, uint32_t key);
 void hash_dump(HASH* hash);
 #endif
