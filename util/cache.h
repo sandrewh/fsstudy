@@ -14,6 +14,7 @@ typedef struct {
 	char* block_data;
 } CACHE_ITEM;
 
+void cache_info(CACHE* cache);
 int cache_get(CACHE* cache, char* buffer, uint32_t block);
 void cache_set(CACHE* cache, char* buffer, uint32_t block);
 CACHE* cache_create(uint32_t block_size, uint32_t num_buckets);
