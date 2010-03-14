@@ -19,12 +19,22 @@ void
 cache_set(CACHE* cache, char* buffer, uint32_t block)
 {
 	if (!cache) return;
-	
+
+	/* copy block data to new buffer */
 	char* new_buffer = malloc(cache->block_size);
-	memcpy(new_buffer, buffer, cache->block_size);
-	
-//	printf("cache: set [%u] = %p\n", block, new_buffer);
-	hash_set(cache->hash, block, new_buffer);
+	memcpy(new_buffer, buffer, cache->block_size);		
+
+	/* if something else was stored at this block, free it, and take shortcut */
+	HASH_ITEM* hash_item = hash_get(cache->hash, block);
+	if (hash_item)
+	{
+		free(hash_item->value);
+		hash_item->value = new_buffer;
+	} else {
+		/* store the block data in hash */
+	//	printf("cache: set [%u] = %p\n", block, new_buffer);
+		hash_set(cache->hash, block, new_buffer);		
+	}
 }
 
 CACHE*
