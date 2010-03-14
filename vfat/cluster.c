@@ -10,16 +10,6 @@
  */
 
 void
-read_sector (part_info *p, char* buffer, uint32_t sector)
-{
-#if USE_CACHE
-	cache_read_sector(p, buffer, sector);
-#else	
-	raw_read_sector(p, buffer, sector);
-#endif
-}
-
-void
 read_cluster (part_info *p, char* buffer, uint32_t cluster)
 {
 	unsigned int sector_num;
@@ -91,16 +81,6 @@ find_free_cluster (part_info *p, uint32_t hint)
 	// TODO: if we had a hint, but couldn't find a free cluster, start at 0 and search to hint-1
 
 	return 0; /* disk full */
-}
-
-void
-write_sector (part_info *p, char* buffer, uint32_t sector)
-{
-#if USE_CACHE
-	cache_write_sector(p, buffer, sector);
-#else
-	raw_write_sector(p, buffer, sector);
-#endif
 }
 
 void

@@ -6,8 +6,8 @@
 #include "fentry.h"
 #include "part_info.h"
 #include "cluster.h"
+#include "cache.h"
 
-#define USE_CACHE 0
 #define CREATE_FILE_ON_WRITE 1
 
 void print_human_size(float size);

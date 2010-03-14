@@ -1,5 +1,4 @@
 #include "vfat.h"
-#include "cache.h" //for debugging functions: read_fat, etc.
 
 void print_human_size(float size);
 

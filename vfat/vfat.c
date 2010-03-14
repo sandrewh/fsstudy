@@ -3,6 +3,7 @@
 #include <math.h>
 
 #include "vfat.h"
+#include "sector.h"
 
 /*
  *
@@ -684,6 +685,6 @@ vfat_umount(part_info *p)
 	}
 	
 #if USE_CACHE
-	cache_flush(&p);
+	cache_flush(p);
 #endif
 }

@@ -28,6 +28,8 @@ typedef struct {
 	uint32_t last_allocated_cluster;
 	uint32_t last_allocated_cluster_on_mount;
 	
+	char * cache_fat;
+	
 	FILE* f;
 } part_info;
 
