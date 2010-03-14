@@ -535,7 +535,7 @@ cmd_find_dir_entries (part_info *vfat, int argc, char *argv[])
 	unsigned int cluster = 0;	
 	for (cluster = 2; cluster < vfat->num_data_clusters; cluster++)
 	{
-		if (read_fat(vfat, cluster)) continue;
+		if (argc < 1 && read_fat(vfat, cluster)) continue;
 		/* for each cluster */
 		read_cluster(vfat, buffer, cluster);
 
@@ -614,15 +614,15 @@ cmd_find_dir_entries (part_info *vfat, int argc, char *argv[])
 				uint32_t file_size = *(uint32_t*)&entry[0x1c];
 				uint32_t file_clusters = file_size / vfat->bytes_per_cluster;
 				if (file_size % vfat->bytes_per_cluster) file_clusters++;
-				int c;
-				for (c=0;c<file_clusters;c++)
+				int j, count = 0;
+				for (j=0;j<file_clusters;j++)
 				{
-					if (read_fat(vfat, first_cluster+c)) break;
+					if (!read_fat(vfat, first_cluster+j)) count++;
 				}
 				
 				if (entry[0x0b] != 0x0f) /* not lfn */
 				{
-					printf("%x/%x\t", c, file_clusters);
+					printf("%x/%x\t", count, file_clusters);
 				} else {
 					printf("\t");
 				}
