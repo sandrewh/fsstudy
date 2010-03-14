@@ -382,7 +382,7 @@ ext2_mount (FILE* f, unsigned int partition_start_sector)
 		printf("ext2_mount: warning: fs was not unmounted cleanly - errors may exist!\n");
 	}
 	
-	ext2->cache = cache_create(ext2->bytes_per_block, ext2->s.s_blocks_count * 0.10);
+	ext2->cache = cache_create(ext2->bytes_per_block, ext2->s.s_blocks_count * 0.13);
 
 	return ext2;
 }
@@ -391,6 +391,7 @@ void
 ext2_umount (ext2_info *ext2)
 {
 	/* writeable mounts not yet supported, therefor not much cleanup for now */
+	cache_info(ext2->cache);
 	cache_destroy(ext2->cache);
 	free(ext2); ext2 = 0;
 }

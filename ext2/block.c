@@ -50,6 +50,7 @@ bg_desc_read (ext2_info *ext2, bg_desc *bg, unsigned int bg_num)
 	/* read the bg desc */
 	/* block_num = 2 for block_size: 1KB, or 1 if block_size > 1KB */
 	unsigned int block_num = (ext2->super_block_offset + ext2->bytes_per_block)/ext2->bytes_per_block;
+	/* TODO: this could be a stack overflow if ext2->bytes_per_block is large */
 	char block[ext2->bytes_per_block];
 	block_read(ext2, block, block_num);
 	
