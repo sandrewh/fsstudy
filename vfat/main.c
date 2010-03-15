@@ -459,22 +459,24 @@ cmd_readfat (part_info *vfat, int argc, char *argv[])
 void
 print_dirty_entry(char * entry, int slot, int bytes_read)
 {
-	printf("%-4d: ", slot);
+	printf("%3d: ", slot);
 
 	if (entry[0x0b] != 0x0f)
 	{
 		int i = 0;		
 		for (i=0;i<11;i++)
 		{
-			printf("%2c ", entry[i]);
+			printf("%c", entry[i]);
 		}
 		
-		if (entry[0x0b] & 0x10) printf("[D] ");
-		else printf("    ");
+		if (entry[0x0b] & 0x10) printf("  [D] ");
+		else printf("      ");
+		
+		printf("    ");
 		
 		for (i=0xd;i<0x1a;i++)
 			if (i != 0x14)
-				printf("%02x ", (unsigned char)entry[i]);
+				printf("%02x", (unsigned char)entry[i]);
 				
 		uint32_t first_cluster = (*(uint16_t*)&entry[0x14] << 16) | *(uint16_t*)&entry[0x1a];
 		uint32_t file_size = *(uint32_t*)&entry[0x1c];
