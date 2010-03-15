@@ -576,6 +576,9 @@ cmd_find_dir_entries (part_info *vfat, int argc, char *argv[])
 					break;
 				}
 			} else {
+				uint32_t first_cluster = (*(uint16_t*)&entry[0x14] << 16) | *(uint16_t*)&entry[0x1a];
+				if (first_cluster > vfat->num_data_clusters && !(first_cluster > 0x0FFFFFEF && first_cluster < 0x0FFFFFF8)) break;
+				
 				if ((entry[0x0e] >> 11) > 23) break; /* check creation time hours */
 				if ((entry[0x16] >> 11) > 23) break; /* check modified time hours */
 
