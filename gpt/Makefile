@@ -1,4 +1,4 @@
-CFLAGS=-g -Wall
+CFLAGS=-g -Wall -m32
 
 gpt : gpt.c gpt.h crc32.o
 	gcc $(CFLAGS) -o gpt gpt.c crc32.o

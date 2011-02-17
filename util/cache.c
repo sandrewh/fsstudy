@@ -20,10 +20,10 @@ cache_info(CACHE* cache)
 }
 
 int
-cache_get(CACHE* cache, char* buffer, uint32_t block_num)
+cache_get(CACHE* cache, uint8_t* buffer, uint32_t block_num)
 {
 	if (!cache) return 0;
-	
+
 	HASH_ITEM* hash_item = hash_get(cache->hash, cache_block_to_slot(cache, block_num));
 	if (!hash_item) return 0;
 
@@ -35,13 +35,13 @@ cache_get(CACHE* cache, char* buffer, uint32_t block_num)
 	}
 	cache_hits++;
 	
-//	printf("cache: get [%u] = %p\n", block, hash_item->value);
+	// printf("cache: get [0x%x] = %p\n", block_num, hash_item->value);
 	memcpy(buffer, citem->block_data, cache->block_size);
 	return 1;
 }
 
 void
-cache_set(CACHE* cache, char* buffer, uint32_t block_num)
+cache_set(CACHE* cache, uint8_t* buffer, uint32_t block_num)
 {
 	if (!cache) return;
 	
@@ -50,7 +50,7 @@ cache_set(CACHE* cache, char* buffer, uint32_t block_num)
 	uint32_t cache_slot = cache_block_to_slot(cache, block_num);
 
 	/* copy block data to new buffer */
-	char* new_buffer = malloc(cache->block_size);
+	uint8_t* new_buffer = malloc(cache->block_size);
 	memcpy(new_buffer, buffer, cache->block_size);
 	
 	/* if something else was stored at this block, free it, and take shortcut */

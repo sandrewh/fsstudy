@@ -36,7 +36,7 @@ datetime_decode (DateTime* dt, uint8_t d1, uint8_t d2, uint8_t t1, uint8_t t2)
 }
 
 void
-f_entry_set_datetimes (f_entry *file, char* entry)
+f_entry_set_datetimes (f_entry *file, uint8_t* entry)
 {
 	//todo: add created time-fine res. 10 ms units [0, 199] stored in 0x0d (1 byte)
 	datetime_decode(&file->created, entry[0x10], entry[0x11], entry[0x0e], entry[0x0f]);
@@ -45,7 +45,7 @@ f_entry_set_datetimes (f_entry *file, char* entry)
 }
 
 void
-from_utf16 (char* buffer, int len)
+from_utf16 (uint8_t* buffer, int len)
 {
 	int i;
 	for (i=0;i<len;i++)
@@ -53,7 +53,7 @@ from_utf16 (char* buffer, int len)
 		buffer[i] = buffer[i*2];
 	//	printf("%c = %#x %#x\n", buffer[i], buffer[i*2], buffer[i*2+1]);
 
-		if (buffer[i] == -1) buffer[i] = 0;
+		if (buffer[i] == 0xff) buffer[i] = 0;
 	}
 }
 
@@ -74,9 +74,9 @@ to_utf16 (char* buffer, int len, int cap)
 }
 
 void
-f_entry_update_lfn (f_entry *file, char* entry)
+f_entry_update_lfn (f_entry *file, uint8_t* entry)
 {
-	/* firsy lfn in series? */
+	/* first lfn in series? */
 	if (entry[0] & 0x40) file->lfn[0] = 0;
 	
 	char lfn_piece[128];
@@ -84,11 +84,11 @@ f_entry_update_lfn (f_entry *file, char* entry)
 
 	//strip out UTF-16
 	from_utf16(entry+0x01, 5);
-	strncat(lfn_piece, entry+1, 5);
+	strncat(lfn_piece, (char*)entry+1, 5);
 	from_utf16(entry+0x0e, 6);
-	strncat(lfn_piece, entry+0x0e, 6);
+	strncat(lfn_piece, (char*)entry+0x0e, 6);
 	from_utf16(entry+0x1c, 2);
-	strncat(lfn_piece, entry+0x1c, 2);
+	strncat(lfn_piece, (char*)entry+0x1c, 2);
 
 	strcat(lfn_piece, file->lfn);
 	strcpy(file->lfn, lfn_piece);	
@@ -187,7 +187,7 @@ fentry_convert_name_to_8_3 (f_entry *f)
 
 /* courtesy http://en.wikipedia.org/wiki/File_Allocation_Table */
 uint8_t
-lfn_checksum (const unsigned char *pFcbName)
+lfn_checksum (const uint8_t *pFcbName)
 {
 	int i;
 	uint8_t sum=0;
@@ -232,10 +232,10 @@ f_entry_set_name_from_8_3 (f_entry *file)
 
 #if 0
 f_entry*
-fentry_from_subpath (part_info *p, f_entry *d, char* path)
+fentry_from_subpath (part_info *p, f_entry *d, uint8_t* path)
 {
 	path = strdup(path);
-	char *search_name = strtok(path, "/");	
+	uint8_t *search_name = strtok(path, "/");	
 	f_entry *child = 0, *parent = search_dir(p, d->first_cluster, search_name);	
 
 	for (;;)

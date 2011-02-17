@@ -20,20 +20,20 @@ f_entry* search_dir(part_info *p, unsigned int dir_cluster, char* search_name);
 
 void file_size_to_disk(part_info *p, f_entry *f);
 
-int read_file(part_info *p, f_entry *f, char* buffer, size_t size, off_t offset);
+int read_file(part_info *p, f_entry *f, uint8_t* buffer, size_t size, off_t offset);
 //int read_dir_callback(f_entry file, void *arg);
 unsigned int read_dir(part_info *p, char* path, f_entry *entries, size_t size, off_t offset);
 
 int dir_rem_entry(part_info *p, f_entry *f);
 int dir_add_entry(part_info *p, f_entry *d, f_entry* f);
 int file_rem(part_info *p, char *path);
-int entry_create(part_info *p, char *path, unsigned char attr);
+int entry_create(part_info *p, char *path, uint8_t attr);
 
 void count_unused_cluster_not_zerod(part_info *p);
 void zero_unused_clusters(part_info *p);
 
 void first_cluster_to_disk(part_info *p, f_entry *f);
-int write_file(part_info *p, f_entry *f, char* buffer, size_t size, off_t offset);
+int write_file(part_info *p, f_entry *f, uint8_t* buffer, size_t size, off_t offset);
 
 part_info* vfat_mount(FILE* f, unsigned int partition_start_sector);
 void vfat_umount(part_info *p);

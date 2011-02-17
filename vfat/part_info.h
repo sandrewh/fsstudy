@@ -7,7 +7,7 @@
 #include "../util/cache.h"
 
 typedef struct {
-	unsigned char oem[9], label[12];
+	uint8_t oem[9], label[12];
 	uint16_t bytes_per_sector;
 	uint8_t sectors_per_cluster;
 	uint16_t reserved_sectors;
@@ -30,7 +30,7 @@ typedef struct {
 	uint32_t last_allocated_cluster;
 	uint32_t last_allocated_cluster_on_mount;
 	
-	char * fat_cache;
+	uint8_t * fat_cache;
 	CACHE* sector_cache;
 	
 	FILE* f;

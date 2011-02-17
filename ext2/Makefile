@@ -1,4 +1,4 @@
-CFLAGS=-g -Wall
+CFLAGS=-g -Wall -m32
 
 ext2 : main.o ext2.o block.o ext2_info.h inode.h ../util/cache.o ../util/hash.o
 	gcc $(CFLAGS) -o ext2 main.o ext2.o block.o inode.c ../util/cache.o ../util/hash.o
@@ -15,6 +15,6 @@ inode.o : inode.c inode.h
 
 cache.o : ../util/cache.c ../util/cache.h
 	make -C ../util/
-	
+
 hash.o : ../util/hash.c ../util/hash.h
 	make -C ../util/

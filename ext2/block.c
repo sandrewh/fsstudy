@@ -6,7 +6,7 @@ block_read (ext2_info *ext2, char* buffer, unsigned int block_num)
 {
 	size_t ret;
 	
-	if (!cache_get(ext2->cache, buffer, block_num))
+	if (!cache_get(ext2->cache, (uint8_t*)buffer, block_num))
 	{
 //		printf("block_read: block_num=0x%x\n", block_num);
 
@@ -17,7 +17,7 @@ block_read (ext2_info *ext2, char* buffer, unsigned int block_num)
 			fread return # of items read (0 or 1) */
 		ret = fread(buffer, ext2->bytes_per_block, 1, ext2->f) * ext2->bytes_per_block;	
 		
-		cache_set(ext2->cache, buffer, block_num);
+		cache_set(ext2->cache, (uint8_t*)buffer, block_num);
 	} else {
 		ret = ext2->bytes_per_block;
 	}

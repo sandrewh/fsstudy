@@ -28,19 +28,19 @@ typedef struct
 	uint32_t dir_num_slots;
 } f_entry;
 
-uint8_t lfn_checksum(const unsigned char *pFcbName);
+uint8_t lfn_checksum(const uint8_t *pFcbName);
 void f_entry_set_attr(f_entry *file, uint8_t attr);
 uint8_t f_entry_get_attr(f_entry *file);
 void datetime_decode(DateTime* dt, uint8_t d1, uint8_t d2, uint8_t t1, uint8_t t2);
-void f_entry_set_datetimes(f_entry *file, char* entry);
-void from_utf16(char* buffer, int len);
+void f_entry_set_datetimes(f_entry *file, uint8_t* entry);
+void from_utf16(uint8_t* buffer, int len);
 void to_utf16(char* buffer, int len, int cap);
 void f_entry_set_name_from_8_3(f_entry *file);
 
-void f_entry_update_lfn(f_entry *file, char* entry);
+void f_entry_update_lfn(f_entry *file, uint8_t* entry);
 void f_entry_convert_name(f_entry *file);
 void fentry_set_unique_name_from_lfn(f_entry *f);
 void fentry_convert_name_to_8_3(f_entry *f);
-//f_entry* fentry_from_subpath(part_info *p, f_entry *d, char* path);
+//f_entry* fentry_from_subpath(part_info *p, f_entry *d, uint8_t* path);
 
 #endif

@@ -1,4 +1,4 @@
-CFLAGS=-g -Wall
+CFLAGS=-g -Wall -m32
 
 hfsp : main.o hfsp.o
 	gcc $(CFLAGS) -o hfsp main.o hfsp.o

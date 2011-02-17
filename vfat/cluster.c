@@ -10,7 +10,7 @@
  */
 
 void
-read_cluster (part_info *p, char* buffer, uint32_t cluster)
+read_cluster (part_info *p, uint8_t* buffer, uint32_t cluster)
 {
 	unsigned int sector_num;
 	for (sector_num=0; sector_num<p->sectors_per_cluster;sector_num++)
@@ -18,7 +18,7 @@ read_cluster (part_info *p, char* buffer, uint32_t cluster)
 }
 
 unsigned int
-read_cluster_chain (part_info *p, uint32_t first_cluster, char* buffer, size_t size, off_t offset)
+read_cluster_chain (part_info *p, uint32_t first_cluster, uint8_t* buffer, size_t size, off_t offset)
 {
 	uint32_t cur_cluster = first_cluster;		
 	if (!cur_cluster) return 0; /* no chain provided */
@@ -33,7 +33,7 @@ read_cluster_chain (part_info *p, uint32_t first_cluster, char* buffer, size_t s
 			if (cur_cluster >= 0xFFFFFF8) return 0; /* chain ended before offset */
 	}
 	
-	char cluster_buffer[p->bytes_per_cluster];
+	uint8_t cluster_buffer[p->bytes_per_cluster];
 	uint32_t cluster_byte_offset = offset % p->bytes_per_cluster;
 //	printf("starting at byte %d of cluster %d (%d)\n\n", cluster_byte_offset, offset_cluster_num, cur_cluster);
 
@@ -82,7 +82,7 @@ find_free_cluster (part_info *p, uint32_t hint)
 }
 
 void
-write_cluster (part_info *p, char* buffer, uint32_t cluster)
+write_cluster (part_info *p, uint8_t* buffer, uint32_t cluster)
 {
 	uint32_t sector_num;
 	for (sector_num=0; sector_num<p->sectors_per_cluster;sector_num++)
@@ -92,7 +92,7 @@ write_cluster (part_info *p, char* buffer, uint32_t cluster)
 //TODO: this needs to be optimized for successive calls (N^2 hurts for large files)
 //		perhaps provide a hint? - not sure
 uint32_t
-write_cluster_chain (part_info *p, uint32_t first_cluster, char* buffer, size_t size, off_t offset)
+write_cluster_chain (part_info *p, uint32_t first_cluster, uint8_t* buffer, size_t size, off_t offset)
 {
 //	printf("write_cluster_chain: first_cluster: %#x, size: %#x, offset: %#x\n", first_cluster, size, offset);
 	uint32_t cur_cluster = first_cluster;		
@@ -111,13 +111,14 @@ write_cluster_chain (part_info *p, uint32_t first_cluster, char* buffer, size_t 
 				/* chain ended before offset */
 				/* extend chain */
 				next_cluster = allocate_new_cluster(p, cur_cluster+1);
+				if (!next_cluster) return 0; /* no free cluster found */
 				write_fat(p, cur_cluster, next_cluster);
 //				printf("write_cluster_chain: end of chain @ cluster %#x (+%#x), appended cluster %#x\n", cur_cluster, cluster_num, next_cluster);
 			}
 			cur_cluster = next_cluster;
 	}
 
-	char cluster_buffer[p->bytes_per_cluster];
+	uint8_t cluster_buffer[p->bytes_per_cluster];
 	uint32_t cluster_byte_offset = offset % p->bytes_per_cluster;
 //	printf("write_cluster_chain: starting at byte %#x of cluster %#x (+%#x)\n", cluster_byte_offset, cur_cluster, offset_cluster_num);
 

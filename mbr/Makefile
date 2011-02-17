@@ -1,4 +1,4 @@
-CFLAGS=-g -Wall
+CFLAGS=-g -Wall -m32
 
 mbr : mbr.c
 	gcc $(CFLAGS) -o mbr mbr.c

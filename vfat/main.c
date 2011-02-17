@@ -45,7 +45,7 @@ cmd_read (part_info *vfat, int argc, char *argv[])
 	
 	f_entry *f = fentry_from_path(vfat, argv[0]);
 
-	char buffer[READ_WRITE_BUFFER_SIZE];
+	uint8_t buffer[READ_WRITE_BUFFER_SIZE];
 	unsigned int total_bytes_read = 0;
 	unsigned int bytes_read = read_file(vfat, f, buffer, READ_WRITE_BUFFER_SIZE, 0);
 	
@@ -183,7 +183,7 @@ cmd_write (part_info *vfat, int argc, char *argv[])
 		first_cluster_to_disk(vfat, f);
 	}
 
-	char buffer[READ_WRITE_BUFFER_SIZE];
+	uint8_t buffer[READ_WRITE_BUFFER_SIZE];
 	unsigned int total_bytes_written = 0;
 	int bytes_read = fread(buffer, 1, READ_WRITE_BUFFER_SIZE, stdin);
 	
@@ -338,7 +338,6 @@ cmd_rmfile (part_info *vfat, int argc, char *argv[])
 	}
 	
 	char * path = argv[0];
-	
 	f_entry *f = fentry_from_path(vfat, path);
 	if (!f)
 	{
@@ -370,7 +369,7 @@ cmd_readcluster (part_info *vfat, int argc, char *argv[])
 	
 	char * strcluster = argv[0];
 	
-	char buffer[vfat->bytes_per_cluster];
+	uint8_t buffer[vfat->bytes_per_cluster];
 	read_cluster(vfat, buffer, strtol(strcluster,0,0));
 	int i;
 	// int j=0;
@@ -457,7 +456,53 @@ cmd_readfat (part_info *vfat, int argc, char *argv[])
 }
 
 void
-print_dirty_entry(char * entry, int slot, int bytes_read)
+cmd_dumpfat (part_info *vfat)
+{
+	uint32_t fat_buf[16];
+	
+	uint32_t i = 0;
+	for (i=0; i<16; i++)
+		fat_buf[i] = 0;
+	
+	int j = 0;
+	uint32_t base_cluster = 0;
+	for (i=0; i < vfat->num_data_clusters; i++)
+	{
+		fat_buf[j++] = read_fat(vfat, i);
+		
+		if (j >= 16)
+		{
+			int found_non_zero = 0;
+			for (j=0; j<16; j++)
+			{
+				if (fat_buf[j])
+				{
+					found_non_zero = 1;
+					break;
+				}
+			}
+			
+			if (found_non_zero)
+			{
+				printf("%08x: ", base_cluster);
+				for (j=0; j<16; j++)
+				{
+					if (fat_buf[j])
+						printf("%8x ", fat_buf[j]);
+					else
+						printf("         ");
+				}
+				printf("\n");
+			}
+			
+			j = 0;
+			base_cluster = i+1;
+		}
+	}
+}
+
+void
+print_dirty_entry(uint8_t * entry, int slot, int bytes_read)
 {
 	printf("%3d: ", slot);
 
@@ -466,7 +511,7 @@ print_dirty_entry(char * entry, int slot, int bytes_read)
 		int i = 0;		
 		for (i=0;i<11;i++)
 		{
-			printf("%c", entry[i]);
+			printf("%02x", entry[i]);
 		}
 		
 		if (entry[0x0b] & 0x10) printf("  [D] ");
@@ -476,7 +521,7 @@ print_dirty_entry(char * entry, int slot, int bytes_read)
 		
 		for (i=0xd;i<0x1a;i++)
 			if (i != 0x14)
-				printf("%02x", (unsigned char)entry[i]);
+				printf("%02x", entry[i]);
 				
 		uint32_t first_cluster = (*(uint16_t*)&entry[0x14] << 16) | *(uint16_t*)&entry[0x1a];
 		uint32_t file_size = *(uint32_t*)&entry[0x1c];
@@ -485,11 +530,11 @@ print_dirty_entry(char * entry, int slot, int bytes_read)
 	} else {
 		int i;
 		for (i=1;i<0xb;i+=2)
-			if (entry[i] != -1) printf("%c", entry[i]);
+			if (entry[i] != 0xff) printf("%c", entry[i]);
 		for (i=0x0e;i<0x1a;i+=2)
-			if (entry[i] != -1) printf("%c", entry[i]);
+			if (entry[i] != 0xff) printf("%c", entry[i]);
 		for (i=0x1c;i<0x20;i+=2)
-			if (entry[i] != -1) printf("%c", entry[i]);
+			if (entry[i] != 0xff) printf("%c", entry[i]);
 	}
 	
 	printf("\n");	
@@ -527,7 +572,7 @@ cmd_dumpdir (part_info *vfat, int argc, char *argv[])
 	int slot = 0;
 	do
 	{
-		char entry[FILE_ENTRY_SIZE];
+		uint8_t entry[FILE_ENTRY_SIZE];
 		bytes_read = read_cluster_chain(vfat, f->first_cluster, entry, FILE_ENTRY_SIZE, total_read);
 		total_read += bytes_read;
 		
@@ -546,7 +591,7 @@ cmd_find_dir_entries (part_info *vfat, int argc, char *argv[])
 {
 	unsigned int entries_per_cluster = vfat->bytes_per_cluster / FILE_ENTRY_SIZE;
 	unsigned int num_dir_clusters = 0;
-	char * buffer = malloc(vfat->bytes_per_cluster);
+	uint8_t * buffer = malloc(vfat->bytes_per_cluster);
 
 	unsigned int cluster = 0;	
 	for (cluster = 2; cluster < vfat->num_data_clusters; cluster++)
@@ -556,7 +601,7 @@ cmd_find_dir_entries (part_info *vfat, int argc, char *argv[])
 		read_cluster(vfat, buffer, cluster);
 
 		/* for each possible dir entry */
-		unsigned char * entry = (unsigned char *)buffer;
+		uint8_t * entry = buffer;
 		int non_blank = 0;
 		int i;
 		for (i = 0; i < entries_per_cluster; i++)
@@ -624,7 +669,7 @@ cmd_find_dir_entries (part_info *vfat, int argc, char *argv[])
 		{
 			num_dir_clusters++;
 			printf("Cluster: 0x%x\n", cluster);
-			unsigned char * entry = (unsigned char *)buffer;
+			uint8_t * entry = buffer;
 			for (i = 0; i < entries_per_cluster; i++)
 			{
 				if (!entry[0]) break;
@@ -646,7 +691,7 @@ cmd_find_dir_entries (part_info *vfat, int argc, char *argv[])
 					printf("\t");
 				}
 				
-				print_dirty_entry((char*)entry, i, FILE_ENTRY_SIZE);
+				print_dirty_entry(entry, i, FILE_ENTRY_SIZE);
 
 				entry += FILE_ENTRY_SIZE;				
 			}			
@@ -663,7 +708,7 @@ cmd_readbytesfromcluster (part_info *vfat, int argc, char *argv[])
 	int bytes = strtol(argv[0], 0, 0);
 	unsigned int cluster_num = strtol(argv[1], 0, 0);
 	
-	char buffer[vfat->bytes_per_cluster];
+	uint8_t buffer[vfat->bytes_per_cluster];
 	
 	while (bytes > 0)
 	{
@@ -832,6 +877,8 @@ main (int argc, char *argv[]) {
 				cmd_readbytesfromcluster(vfat, num_sub_args-1, sub_argv+1);				
 			} else if (strcmp(sub_argv[0], "readfat") == 0) {
 				cmd_readfat(vfat, num_sub_args-1, sub_argv+1);
+			} else if (strcmp(sub_argv[0], "dumpfat") == 0) {
+				cmd_dumpfat(vfat);
 			} else if (strcmp(sub_argv[0], "info") == 0) {
 				cmd_info(vfat, num_sub_args-1, sub_argv+1);
 			} else if (strcmp(sub_argv[0], "help") == 0 || strcmp(sub_argv[0], "todo") == 0) {

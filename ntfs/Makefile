@@ -1,4 +1,4 @@
-CFLAGS=-g -Wall
+CFLAGS=-g -Wall -m32
 
 ntfs : main.o ntfs.o
 	gcc $(CFLAGS) -o ntfs main.o ntfs.o
