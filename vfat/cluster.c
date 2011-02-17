@@ -146,6 +146,7 @@ write_cluster_chain (part_info *p, uint32_t first_cluster, uint8_t* buffer, size
 			/* chain ended before offset */
 			/* extend chain */
 			next_cluster = allocate_new_cluster(p, cur_cluster+1);
+			if (!next_cluster) return bytes_written; /* no free cluster found */
 			write_fat(p, cur_cluster, next_cluster);
 //			printf("write_cluster_chain: end of chain @ cluster %#x, appended cluster %#x\n", cur_cluster, next_cluster);			
 		}
