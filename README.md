@@ -3,10 +3,10 @@ fsstudy: Simple drivers for vfat, ext2, mbr, gpt
 
 # Status
 
-vfat: read/write support
-ext2/3: read support
-hfsp: not functional
-ntfs: not functional
+* vfat: read/write support
+* ext2/3: read support
+* hfsp: not functional
+* ntfs: not functional
 
 # Examples
 
