@@ -32,3 +32,7 @@ To write to a file
 
 example usage of ext2 driver: `ext2/main.c`
 
+# Contact
+
+Andy Hanna
+andysah@gmail.com
