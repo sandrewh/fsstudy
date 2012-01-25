@@ -358,7 +358,6 @@ write_file(part_info *p, f_entry *f, uint8_t* buffer, size_t size, off_t offset)
 	}
 
 	return write_cluster_chain(p, f->first_cluster, buffer, size, offset);
-	return 0;
 }
 
 // should set 0x80 bit in index 0 of all LFN entry

@@ -165,7 +165,7 @@ allocate_new_cluster (part_info *p, uint32_t hint)
 	uint32_t new_cluster = find_free_cluster(p, hint);
 	if (!new_cluster)
 	{
-		printf("dir_add_entry: no free cluster found, entry not added");
+		printf("allocate_new_cluster: no free cluster found\n");
 		return 0;
 	}
 
